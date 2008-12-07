@@ -1,3 +1,4 @@
+#labels Phase-Implementation
 http://www.js-core.ru/logo.png
 
 js-core allows to organize chains of calls to provide easier and more consistent way for working with DOM in JavaScript.
