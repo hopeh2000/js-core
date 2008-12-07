@@ -14,7 +14,6 @@ $.ready(function() {
 }}}
 
 ==Framework structure==
-Simple example without caching:
 {{{
 // fundamental methods
 var core = {
@@ -28,13 +27,14 @@ function _$(arg) {
 
 // basic methods
 _$.prototype = {
-  html: function(…) {
-    …
+  parent: function() {
+    return new _$(this.node.parentNode);
   },
   child: function(…) {
     …
   },
-  parent: function() {
+  html: function(…) {
+    …
   },
   …
 };
