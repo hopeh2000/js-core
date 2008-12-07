@@ -16,6 +16,7 @@ $.ready(function() {
 ==Framework structure==
 Simple example without caching:
 {{{
+// fundamental methods
 var core = {
   ie: …,
   …
@@ -25,6 +26,7 @@ function _$(arg) {
   this.node = typeof arg == 'string' ? document.getElementById(arg) : arg;
 }
 
+// basic methods
 _$.prototype = {
   html: function(…) {
     …
@@ -41,6 +43,7 @@ function $(arg) {
   return new _$(arg);
 }
 
+// additional methods
 $.ready = function(fn) {
   …
 };
