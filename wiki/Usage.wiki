@@ -1,4 +1,13 @@
-Append to <head>:
+=How to use “js-core”=
+
+==Append to `<head>`==
 {{{
 <script type="text/javascript" src="js-core-2.5.9.js"></script>
+}}}
+
+==Waiting for “`DOMContentLoaded`”==
+{{{
+$.ready(function() {
+    // your code
+});
 }}}
