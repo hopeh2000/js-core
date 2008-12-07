@@ -1,16 +1,10 @@
-=How to use js-core=
+http://www.js-core.ru/logo.png
+
 js-core allows to organize chains of calls to provide easier and more consistent way for working with DOM in JavaScript.
 
 ==Append `<script>` to `<head>`==
 {{{
 <script type="text/javascript" src="js-core-2.5.9.js"></script>
-}}}
-
-==Waiting for `DOMContentLoaded`==
-{{{
-$.ready(function() {
-  // your code
-});
 }}}
 
 ==Framework structure==
@@ -47,4 +41,37 @@ function $(arg) {
 $.ready = function(fn) {
   …
 };
+}}}
+
+==Waiting for `DOMContentLoaded`==
+{{{
+$.ready(function() {
+  // your code
+});
+}}}
+
+==Get element by id==
+{{{
+$('element-id') // return {node: HTMLElement}
+}}}
+==Using chains==
+{{{
+$('element-id')      // get element by id
+  .parent()          // get parent node
+  .append('p')       // append new HTMLParagraphElement
+  .addClass('entry') // add CSS-class "entry"
+}}}
+==Context link==
+{{{
+$('element-id')     // this → HTMLElement with id="elements-id"
+  .append('p')      // this → HTMLParagraphElement
+  .prev('div')      // this → HTMLDivElement
+  .prepend('span'); // this → HTMLSpanElement
+
+$.n('div')                  // this → HTMLDivElement
+  .appendTo('elements-id'); // this → HTMLElement with id="elements-id"
+
+$('element-id').run(function(arg1, arg2) {
+  // this → HTMLElement with id="elements-id"
+}, [arg1, arg2]);
 }}}
