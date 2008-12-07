@@ -1,7 +1,7 @@
 =How to use “js-core”=
-“js-core” allows to organize chains of calls to provide easier and more consistent way for working with DOM in JavaScript
+“js-core” allows to organize chains of calls to provide easier and more consistent way for working with DOM in JavaScript.
 
-==Append to `<head>`==
+==Append `<script>` to `<head>`==
 {{{
 <script type="text/javascript" src="js-core-2.5.9.js"></script>
 }}}
@@ -9,6 +9,39 @@
 ==Waiting for “`DOMContentLoaded`”==
 {{{
 $.ready(function() {
-    // your code
+  // your code
 });
+}}}
+
+==Structure==
+Simple example without caching:
+{{{
+var core = {
+  ie: …,
+  …
+};
+
+function _$(arg) {
+  this.node = typeof arg == 'string' ? document.getElementById(arg) : arg;
+}
+
+_$.prototype = {
+  html: function() {
+    …
+  },
+  child: function() {
+    …
+  },
+  parent: function() {
+  },
+  …
+};
+
+function $(arg) {
+  return new _$(arg);
+}
+
+$.ready = function(fn) {
+  …
+};
 }}}
