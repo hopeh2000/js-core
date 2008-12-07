@@ -1,0 +1,4 @@
+Append to <head>:
+{{{
+<script type="text/javascript" src="js-core-2.5.9.js"></script>
+}}}
