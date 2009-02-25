@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.7.7 a0.4
+/* js-core JavaScript framework, version 2.7.7 a0.5
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -379,14 +379,14 @@ core.prototype = {
 		return this;
 	},
 	show: function(type) {
-		this.node.style.display = type || '';
+		this.node.style.display = type || 'block';
 		return this;
 	},
 	visible: function() {
 		return this.node.offsetWidth > 0 || this.node.offsetHeight > 0;
 	},
 	toggle: function(type) {
-		this.node.style.display = this.css(['display']) === 'none' ? type || '' : 'none';
+		this.node.style.display = this.css(['display']) === 'none' ? type || 'block' : 'none';
 		return this;
 	},
 	position: function() {
