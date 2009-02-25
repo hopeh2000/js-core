@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.7.7 a0.2
+/* js-core JavaScript framework, version 2.7.7 a0.3
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -23,9 +23,6 @@ core.extend(core, {
 	cache: {},
 	id: function(arg) {
 		return typeof arg === 'string' ? this.cache[arg] || (this.cache[arg] = doc.getElementById(arg)) : arg;
-	},
-	tag: function(tag, node) {
-		return (node || doc).getElementsByTagName(tag || '*');
 	},
 	create: function(arg) {
 		return typeof arg === 'string' ? doc.createElement(arg) : arg;
@@ -493,6 +490,8 @@ core.prototype = {
 		}
 		else selector = '.' + classes.join(',.');
 		return new core.list(this.node.querySelectorAll(selector), false);
+	} : doc.getElementsByClassName ? function(classes, tags) {
+		return !tags && (classes = core.toArray(classes)).length == 1 ? new core.list(this.node.getElementsByClassName(classes[0]), false) : this.findAttr('className', classes, tags)
 	} : function(classes, tags) {
 		return this.findAttr('className', classes, tags);
 	}
