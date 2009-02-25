@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.7.7 a0.1
+/* js-core JavaScript framework, version 2.7.7 a0.2
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -123,8 +123,14 @@ core.extend(core, {
 	}
 });
 core.prototype = {
-	parent: function() {
-		return new core(this.node.parentNode);
+	parent: function(tag) {
+		var node = this.node.parentNode;
+		if(tag) {
+			tag = tag.toUpperCase();
+			do if(node.tagName === tag) break;
+			while(node = node.parentNode);
+		}
+		return new core(node);
 	},
 	append: function(arg) {
 		return new core(this.node.appendChild(core.create(arg)));
@@ -444,31 +450,35 @@ core.prototype = {
 		}
 		return new core.list(array, false);		
 	},
-	child: function(find, children) {
-		return function(tags, depth) {
-			var i = -1, list = [], filter = false;;
-			if(tags === true || (!tags && depth)) list = this.node.getElementsByTagName('*');
-			else if(tags) {
-				if(depth) list = (i = (tags = core.toArray(tags)).length) == 1 ? this.node.getElementsByTagName(tags[0]) : find(this.node, tags, i);
-				else {
-					var child = this.node[children], length = child.length, j = 0;
-					tags = ' ' + (tags.join ? tags.join(' ') : tags).toUpperCase() + ' ';
-					while(++i < length) if(tags.indexOf(' ' + child[i].tagName + ' ') != -1) list[j++] = child[i];
-				}
-			}
-			else {
-				list = this.node[children];
-				filter = null; // IMORTANT: remove this for browsers supported children!
-			}
-			return new core.list(list, filter);
+	child: function(find, children, filter) {
+		if(doc.createElement('div').children !== undefined) {
+			children = 'children';
+			filter = false;
 		}
+		else children = 'childNodes';
+		return function(tags, depth) {
+			if(tags || depth) {
+				var i = -1, list = [];
+				if(tags === true || (!tags && depth)) list = this.node.getElementsByTagName('*');
+				else if(tags) {
+					if(depth) list = (i = (tags = core.toArray(tags)).length) == 1 ? this.node.getElementsByTagName(tags[0]) : find(this.node, tags, i);
+					else {
+						var child = this.node[children], length = child.length, j = 0;
+						tags = ' ' + (tags.join ? tags.join(' ') : tags).toUpperCase() + ' ';
+						while(++i < length) if(tags.indexOf(' ' + child[i].tagName + ' ') != -1) list[j++] = child[i];
+					}
+				}
+				return new core.list(list, false);
+			}
+			else return new core.list(this.node[children], filter);
+		};
 	}(doc.querySelectorAll ? function(node, tags) {
 		return node.querySelectorAll(tags.join(','));
 	} : function(node, tags, i) {
 		var list = [];
 		while(i--) list = list.concat(core.makeArray(node.getElementsByTagName(tags[i])));
 		return list;
-	}, doc.createElement('div').children !== undefined ? 'children' : 'childNodes'),
+	}),
 	findClass: doc.querySelectorAll ? function(classes, tags) {
 		var selector = [];
 		classes = core.toArray(classes);
@@ -607,7 +617,7 @@ core.timer.prototype = {
 			(timer = this).enabled = true;
 			(function() {
 				timer.func.call(timer.context, timer);
-				if(timer.enabled) win.setTimeout(arguments.callee, timer.time);
+				if(timer.enabled) setTimeout(arguments.callee, timer.time);
 			})();
 		}
 		return this;
@@ -621,7 +631,7 @@ core.timer.prototype = {
 			(timer = this).enabled = true;
 			(function() {
 				timer.func.call(timer.context, timer);
-				if(timer.enabled && --amount) win.setTimeout(arguments.callee, timer.time);
+				if(timer.enabled && --amount) setTimeout(arguments.callee, timer.time);
 				else {
 					timer.enabled = false;
 					if(callback) callback.call(context, timer);
@@ -693,7 +703,7 @@ win.core = win.$ ? core : (win.$ = core);
 (function(type, listener) {
 	ie ? doc.write(unescape('%3CSCRIPT onreadystatechange="if(this.readyState==\'complete\') core.ready()" defer="defer" src="\/\/:"%3E%3C/SCRIPT%3E')) : doc.addEventListener(type, listener, false);
 	if(/KHTML|WebKit/i.test(navigator.userAgent)) (function() {
-		/loaded|complete/.test(doc.readyState) ? core.ready() : win.setTimeout(arguments.callee, 10);
+		/loaded|complete/.test(doc.readyState) ? core.ready() : setTimeout(arguments.callee, 10);
 	})();
 	core.bind(win, 'load', listener);
 })('DOMContentLoaded', function() {
