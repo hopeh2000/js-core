@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.7.7 a0.3
+/* js-core JavaScript framework, version 2.7.7 a0.4
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -375,17 +375,19 @@ core.prototype = {
 		return doc.defaultView.getComputedStyle(node, null)[property];
 	}),
 	hide: function() {
-		return this.css({display: 'none', visibility: 'hidden'});
+		this.node.style.display = 'none';
+		return this;
 	},
 	show: function(type) {
-		return this.css({display: type || 'block', visibility: 'visible'});
+		this.node.style.display = type || '';
+		return this;
 	},
 	visible: function() {
-		var props = this.css(['display', 'visibility']);
-		return props[0] !== 'none' && props[1] !== 'hidden';
+		return this.node.offsetWidth > 0 || this.node.offsetHeight > 0;
 	},
 	toggle: function(type) {
-		return this.visible() ? this.hide() : this.show(type);
+		this.node.style.display = this.css(['display']) === 'none' ? type || '' : 'none';
+		return this;
 	},
 	position: function() {
 		var node = this.node, top = 0, left = 0;
