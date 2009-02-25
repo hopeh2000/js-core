@@ -111,8 +111,8 @@ core.extend(core, {
 		core.extend(this, {time: time, func: func, context: context, enabled: false});
 	},
 	event: function(event) {
-		event = event || win.event;
 		if(this.event) return new this.event(event);
+		event = event || win.event;
 		this.object = event;
 	},
 	trim: function(str) {
@@ -612,6 +612,14 @@ core.extend(core.list.prototype, function(slice) {
 		}
 	};
 }(Array.prototype.slice));
+core.prototype.store = core.list.prototype.store = function() {
+	return core.storage = this;
+};
+core.restore = core.prototype.restore = core.list.prototype.restore = function() {
+	var storage = core.storage;
+	delete core.storage;
+	return storage;
+};
 core.timer.prototype = {
 	start: function(timer) {
 		if(!this.enabled) {
