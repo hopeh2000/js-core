@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.8.0 a5
+/* js-core JavaScript framework, version 2.8.0 a6
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -210,11 +210,12 @@ core.prototype = {
 		return arg ? this.replace(core.id(arg)) : this.node;
 	},
 	empty: function() {
-		this.child(true).each('remove');
+		this.child(true).each('remove', false);
 		while(this.node.firstChild) this.node.removeChild(this.node.firstChild);
 		return this;
 	},
-	remove: function() {
+	remove: function(child) {
+		if(child !== false) this.empty();
 		core.clear(this.unbind().node).parentNode.removeChild(this.node);
 		return this;
 	},
@@ -255,7 +256,7 @@ core.prototype = {
 		if(handler) {
 			events = handler.events;
 			if(listener) {
-				delete events[type][listener.fid];
+				if(events[type]) delete events[type][listener.fid];
 				if(core.isEmpty(events[type])) return this.unbind(type);
 			}
 			else if(type) {
@@ -286,10 +287,6 @@ core.prototype = {
 				else core.extend(this.events[type], list);
 			}, current);
 		}
-		return this;
-	},
-	dispatchEvent: function() {
-		// todo
 		return this;
 	},
 	exist: function(exist, die) {
