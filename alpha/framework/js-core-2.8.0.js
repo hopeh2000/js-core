@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.8.0 a2
+/* js-core JavaScript framework, version 2.8.0 a3
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -30,39 +30,40 @@ core.extend(core, {
 	insert: function(node, arg, before) {
 		return node.insertBefore(this.create(arg), before);
 	},
-	/*bind: win.addEventListener ? function(node, type, listener) {
+	bind: win.addEventListener ? function(node, type, listener) {
 		node.addEventListener(type, listener, false);
-	} : function(expr) {
-		return function(node, type, listener) {
-			node.attachEvent('on' + type, expr.test(listener) ? this.context(listener, node) : listener);
-		};
-	}(/^function\s*\(/),
+	} : function(node, type, listener) {
+		node.attachEvent('on' + type, listener);
+	},
 	unbind: win.removeEventListener ? function(node, type, listener) {
 		node.removeEventListener(type, listener, false);
 	} : function(node, type, listener) {
 		node.detachEvent('on' + type, listener);
-	},*/
+	},
+	isEmpty: function(obj) {
+		var key, empty = true;
+		for(key in obj) if(obj.hasOwnProperty(key)) {
+			empty = false;
+			break;
+		}
+		return empty;
+	},
 	handlers: {
 		guid: 1,
 		fid: 1,
-		listener: function(guid) {
-			return function(event) {
-				core.forEach(core.handlers[guid].events[(event = event || win.event).type], function(fid, func) {
-					func.call(this, event);
-				}, core.handlers[guid].link);
+		createListener: function(preventDefault) {
+			return function(guid) {
+				return function(event) {
+					core.forEach(core.handlers[guid].events[(event = event || win.event).type], function(fid, func) {
+						if(func.call(this, event) === false) preventDefault(event);
+					}, core.handlers[guid].link);
+				};
 			};
-		}
-		/*
-		guid: {
-			link: → HTMLElement,
-			listener: → Function,
-			events: {
-				type: {
-					fid: → Function
-				}
-			}
-		}
-		*/
+		}(ie ? function(event) {
+			event.returnValue = false;
+		} : function(event) {
+			event.preventDefault();
+		})
 	},
 	attrs: {
 		htmlFor: 'for',
@@ -93,9 +94,6 @@ core.extend(core, {
 			return func.call(context, arg);
 		};
 	},
-	/*preventDefault: function _func(event) {
-		new core.event(event).preventDefault();
-	},*/
 	parse: function(html) {
 		var div = document.createElement('div');
 		div.innerHTML = html;
@@ -233,75 +231,43 @@ core.prototype = {
 		}
 		else return this.node.innerText || this.node.textContent;
 	},
-	/*useDefault: function(prefix) {
-		return function(type, def) {
-			if(def) {
-				this.node[prefix + type] = false;
-				core.unbind(this.node, type, core.preventDefault);
-			}
-			else if(!this.node[prefix + type]) {
-				this.node[prefix + type] = true;
-				core.bind(this.node, type, core.preventDefault);
-			}
-			return this;
+	bind: function(type, func) {
+		var guid = this.node.guid || (this.node.guid = core.handlers.guid++);
+		if(!core.handlers[guid]) core.handlers[guid] = {
+			link: this.node,
+			listener: core.handlers.createListener(guid),
+			events: {}
 		};
-	}('preventDefaultOn'),
-	bind: function(type, listener, def) {
-		core.bind(this.node, type, listener);
-		return def !== undefined ? this.useDefault(type, def) : this;
+		if(!core.handlers[guid].events[type]) {
+			core.handlers[guid].events[type] = {};
+			core.bind(this.node, type, core.handlers[guid].listener);
+		}
+		if(!func.fid) func.fid = core.handlers.fid++;
+		core.handlers[guid].events[type][func.fid] = func;
+		return this;
 	},
-	unbind: function(type, listener, def) {
-		core.unbind(this.node, type, listener);
-		return def !== undefined ? this.useDefault(type, def) : this;
-	},*/
-	bind: function(bind) {
-		return function(type, func, def) {
-			// todo: preventDefault
-			if(!func.fid) func.fid = core.handlers.fid++;
-			if(!this.node.guid) this.node.guid = core.handlers.guid++;
-			if(!core.handlers[this.node.guid]) core.handlers[this.node.guid] = {
-				link: this.node,
-				listener: core.handlers.listener(this.node.guid),
-				events: {}
-			};
-			if(!core.handlers[this.node.guid].events[type]) {
-				core.handlers[this.node.guid].events[type] = {};
-				bind(this.node, type, core.handlers[this.node.guid].listener);
+	unbind: function(type, listener) {
+		var handler = core.handlers[this.node.guid], events;
+		if(handler) {
+			events = handler.events;
+			if(listener) {
+				delete events[type][listener.fid];
+				if(core.isEmpty(events[type])) return this.unbind(type);
 			}
-			core.handlers[this.node.guid].events[type][func.fid] = func;
-			return this;
-		};
-	}(win.addEventListener ? function(node, type, listener) {
-		node.addEventListener(type, listener, false);
-	} : function(node, type, listener) {
-		node.attachEvent('on' + type, listener);
-	}),
-	unbind: function(unbind) {
-		return function(type, listener, def) {
-			// todo: preventDefault
-			if(core.handlers[this.node.guid]) {
-				if(listener) {
-					// todo: check if object is empty
-					delete core.handlers[this.node.guid].events[type][listener.fid];
-				}
-				else if(type) {
-					unbind(this.node, type, core.handlers[this.node.guid].listener);
-					delete core.handlers[this.node.guid].events[type];
-				}
-				else {
-					core.forEach(core.handlers[this.node.guid].events, function(type) {
-						unbind(this, type, core.handlers[this.guid].listener);
-					}, this.node);
-					delete core.handlers[this.node.guid];
-				}
+			else if(type) {
+				delete events[type];
+				core.unbind(this.node, type, handler.listener);
+				if(core.isEmpty(handler.events)) delete core.handlers[this.node.guid];
 			}
-			return this;
-		};
-	}(win.removeEventListener ? function(node, type, listener) {
-		node.removeEventListener(type, listener, false);
-	} : function(node, type, listener) {
-		node.detachEvent('on' + type, listener);
-	}),
+			else {
+				core.forEach(events, function(type) {
+					core.unbind(this, type, handler.listener);
+				}, this.node);
+				delete core.handlers[this.node.guid];
+			}
+		}
+		return this;
+	},
 	exist: function(exist, die) {
 		if(exist && this.node) exist.call(this.node);
 		else if(die && !this.node) die();
@@ -814,7 +780,7 @@ win.core = win.$ ? core : (win.$ = core);
 	if(/KHTML|WebKit/i.test(navigator.userAgent)) (function() {
 		/loaded|complete/.test(doc.readyState) ? core.ready() : setTimeout(arguments.callee, 10);
 	})();
-	new core(win).bind('load', listener);
+	core.bind(win, 'load', listener);
 })('DOMContentLoaded', function() {
 	core.ready();
 });
