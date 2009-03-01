@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.8.0 a1
+/* js-core JavaScript framework, version 2.8.0 a2
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -279,20 +279,23 @@ core.prototype = {
 	unbind: function(unbind) {
 		return function(type, listener, def) {
 			// todo: preventDefault
-			if(listener) {
-				// todo: check if object is empty
-				delete core.handlers[this.node.guid].events[type][listener.fid];
+			if(core.handlers[this.node.guid]) {
+				if(listener) {
+					// todo: check if object is empty
+					delete core.handlers[this.node.guid].events[type][listener.fid];
+				}
+				else if(type) {
+					unbind(this.node, type, core.handlers[this.node.guid].listener);
+					delete core.handlers[this.node.guid].events[type];
+				}
+				else {
+					core.forEach(core.handlers[this.node.guid].events, function(type) {
+						unbind(this, type, core.handlers[this.guid].listener);
+					}, this.node);
+					delete core.handlers[this.node.guid];
+				}
 			}
-			else if(type) {
-				unbind(this.node, type, core.handlers[this.node.guid].listener);
-				delete core.handlers[this.node.guid].events[type];
-			}
-			else {
-				core.forEach(core.handlers[this.node.guid].events, function(type) {
-					unbind(this, type, core.handlers[this.guid].listener);
-				}, this.node);
-				delete core.handlers[this.node.guid];
-			}
+			return this;
 		};
 	}(win.removeEventListener ? function(node, type, listener) {
 		node.removeEventListener(type, listener, false);
