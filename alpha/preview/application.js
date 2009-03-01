@@ -308,20 +308,6 @@ $.ready(function() {
 		$(this).focus('addClass', 'hover').blur('removeClass', 'hover').mousedown('addClass', 'active').mouseup('removeClass', 'active');
 	});
 	
-	$('content').prepend('button').text('unbind buttons click').click(function() {
-		$.tags('button').each('unbind', 'click');
-	});
-	$('content').prepend('button').text('unbind all menu').click(function() {
-		$('header').child('a', true).each('unbind');
-	});
-	
-	function F(e) {
-		alert(this.tagName);
-	}
-	
-	$(document.body).click(F);
-	$('content').click(F);
-	$(document.body).unbind('click', F);
-	$('content').unbind();
-	
+	$('header').children('a').item(1).clone().attr({tooltip: 'Copied Handlers', tabIndex: 5}).text('Copied Handlers').appendTo('header');
+
 });

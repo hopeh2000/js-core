@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.8.0 a3
+/* js-core JavaScript framework, version 2.8.0 a5
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -181,8 +181,9 @@ core.prototype = {
 		var node = core.id(arg);
 		return new core(core.insert(node.parentNode, this.node, node));
 	},
-	clone: function(bool) {
-		return new core(this.node.cloneNode(bool !== false));
+	clone: function(child, handlers, type) {
+		var obj = new core(this.node.cloneNode(child !== false));
+		return handlers !== false ? obj.copyHandlers(this.node, type) : obj;
 	},
 	replace: function(arg) {
 		try {
@@ -209,17 +210,17 @@ core.prototype = {
 		return arg ? this.replace(core.id(arg)) : this.node;
 	},
 	empty: function() {
-		core.clear(this.node);
+		this.child(true).each('remove');
 		while(this.node.firstChild) this.node.removeChild(this.node.firstChild);
 		return this;
 	},
 	remove: function() {
-		core.clear(this.node).parentNode.removeChild(this.node);
+		core.clear(this.unbind().node).parentNode.removeChild(this.node);
 		return this;
 	},
 	html: function(str) {
 		if(str !== undefined) {
-			this.node.innerHTML = str;
+			this.empty().node.innerHTML = str;
 			return this;
 		}
 		else return this.node.innerHTML;
@@ -238,12 +239,15 @@ core.prototype = {
 			listener: core.handlers.createListener(guid),
 			events: {}
 		};
-		if(!core.handlers[guid].events[type]) {
+		if(type && !core.handlers[guid].events[type]) {
 			core.handlers[guid].events[type] = {};
 			core.bind(this.node, type, core.handlers[guid].listener);
 		}
-		if(!func.fid) func.fid = core.handlers.fid++;
-		core.handlers[guid].events[type][func.fid] = func;
+		if(func) {
+			if(!func.fid) func.fid = core.handlers.fid++;
+			core.handlers[guid].events[type][func.fid] = func;
+		}
+		else return core.handlers[guid];
 		return this;
 	},
 	unbind: function(type, listener) {
@@ -266,6 +270,26 @@ core.prototype = {
 				delete core.handlers[this.node.guid];
 			}
 		}
+		return this;
+	},
+	copyHandlers: function(arg, type) {
+		var handler = core.handlers[core.id(arg).guid], current, node;
+		if(handler) {
+			current = this.bind(type);
+			node = this.node;
+			if(type) core.extend(current.events[type], handler.events[type]);
+			else core.forEach(handler.events, function(type, list) {
+				if(!this.events[type]) {
+					this.events[type] = list;
+					core.bind(node, type, this.listener);
+				}
+				else core.extend(this.events[type], list);
+			}, current);
+		}
+		return this;
+	},
+	dispatchEvent: function() {
+		// todo
 		return this;
 	},
 	exist: function(exist, die) {
@@ -544,6 +568,9 @@ core.prototype = {
 		while(i--) list = list.concat(core.makeArray(node.getElementsByTagName(tags[i])));
 		return list;
 	}),
+	children: function(tags) {
+		return this.child(tags, true);
+	},
 	findClass: doc.querySelectorAll ? function(classes, tags) {
 		var selector = [];
 		classes = core.toArray(classes);
