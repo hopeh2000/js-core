@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.8.0 a6
+/* js-core JavaScript framework, version 2.8.0 a8
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -181,9 +181,30 @@ core.prototype = {
 		var node = core.id(arg);
 		return new core(core.insert(node.parentNode, this.node, node));
 	},
-	clone: function(child, handlers, type) {
-		var obj = new core(this.node.cloneNode(child !== false));
-		return handlers !== false ? obj.copyHandlers(this.node, type) : obj;
+	clone: function(cloneChild, cloneHandlers) {
+		cloneChild = cloneChild !== false;
+		cloneHandlers = cloneHandlers !== false;
+		var list = cloneChild ? this.child(true).add(this.node) : new core.list([this.node]), clone, guid, handler, data = {};
+		list.each(function(index) {
+			guid = this.guid;
+			this.guid = null;
+			if(guid && core.handlers[guid]) {
+				core.forEach(core.handlers[guid].events, function(type) {
+					core.unbind(this, type, core.handlers[guid].listener);
+				}, this);
+				data[guid] = index;
+			}
+		});
+		clone = new core(this.node.cloneNode(cloneChild));
+		list = cloneChild ? clone.child(true).add(clone.node) : new core.list([clone.node]);
+		core.forEach(data, function(guid, index) {
+			(handler = core.handlers[guid]).link.guid = guid;
+			core.forEach(handler.events, function(type) {
+				core.bind(this.link, type, this.listener);
+			}, handler);
+			if(cloneHandlers) list.item(index).copyHandlers(handler.link);
+		});
+		return clone;
 	},
 	replace: function(arg) {
 		try {
@@ -649,6 +670,12 @@ core.list.prototype = {
 	},
 	size: function() {
 		return this.items.length;
+	},
+	add: function(args) {
+		if(!this.items.join) this.items = core.makeArray(this.items);
+		if(!args.join && args.length !== undefined) args = core.makeArray(args);
+		this.items = this.items.concat(args);
+		return this;
 	}
 };
 core.extend(core.list.prototype, function(slice) {
@@ -656,7 +683,7 @@ core.extend(core.list.prototype, function(slice) {
 		var length = (args = slice.call(args, 1)).length < 2;
 		return length ? {method: 'call', args: args[0]} : {method: 'apply', args: args};
 	}
-	core.forEach('resize,scroll,blur,focus,error,load,unload,click,dblclick,mousedown,mouseup,mousemove,mouseover,mouseout,keydown,keypress,keyup,change,select,submit,reset'.split(','), function(listener) {
+	core.forEach('resize,scroll,blur,focus,error,abort,load,unload,click,dblclick,mousedown,mouseup,mousemove,mouseover,mouseout,keydown,keypress,keyup,change,select,submit,reset'.split(','), function(listener) {
 		return function(type) {
 			core.prototype[type] = function(arg) {
 				return arg ? this.bind(type, arg.call ? arg : listener(arg, arguments)) : this.node[type]();

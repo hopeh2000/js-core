@@ -49,12 +49,6 @@ core.ajax.prototype.open = function(params) {
 		if(this.requestHeaders) core.forEach(this.requestHeaders, function(key, value) {
 			ajax.xhr.setRequestHeader(key, value);
 		});
-		/*this.xhr.onreadystatechange = function() {
-			if(ajax.xhr.readyState == 4) {
-				if(ajax.xhr.status == 200 || ajax.xhr.status == 0 && ajax.success) ajax.success(ajax.xhr.responseText);
-				else if(ajax.error && !ajax.aborted) ajax.error(ajax.xhr.statusText);
-			}
-		};*/
 		this.xhr.send(this.params);
 		(function() {
 			if(ajax.xhr.readyState == 4) {

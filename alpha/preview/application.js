@@ -37,7 +37,7 @@ $.ready(function() {
 				}
 			}, 300);
 		}
-		$(this).firstChild('ul').child('a', true).each(function() {
+		$(this).firstChild('ul').children('a').each(function() {
 			$(this).mouseover(show).mouseout(hide).mousemove(function(e) {
 				// calculate position left
 				if(change) style.left = $.event(e).mousePosition().x - 26 + 'px';
@@ -62,8 +62,8 @@ $.ready(function() {
 	function args(example) {
 		var	button = example.firstChild('button'),
 				temp = example.firstChild('div'),
-				dom = temp.child('span', true),
-				javascript = temp.next('div').child('code', true),
+				dom = temp.children('span'),
+				javascript = temp.next('div').children('code'),
 				actions = example.firstChild('ol').child('li');
 		return [button, dom, javascript, actions];
 	}
@@ -308,6 +308,8 @@ $.ready(function() {
 		$(this).focus('addClass', 'hover').blur('removeClass', 'hover').mousedown('addClass', 'active').mouseup('removeClass', 'active');
 	});
 	
-	$('header').children('a').item(1).clone().attr({tooltip: 'Copied Handlers', tabIndex: 5}).text('Copied Handlers').appendTo('header');
+	var input = $.parse('<input type="button" value="Button">').click('enabled', false);
+	input.appendTo('header');
+	input.clone().attr('value', 'Clone').appendTo('header');
 
 });
