@@ -1,4 +1,4 @@
-/* js-core JavaScript framework, version 2.8.0 a8
+/* js-core JavaScript framework, version 2.8.0 beta 1
    Copyright (c) 2009 Dmitry Korobkin
    Released under the MIT License.
    More information: http://www.js-core.ru/
@@ -41,11 +41,11 @@ core.extend(core, {
 		node.detachEvent('on' + type, listener);
 	},
 	isEmpty: function(obj) {
-		var key, empty = true;
-		for(key in obj) if(obj.hasOwnProperty(key)) {
+		var empty = true;
+		core.forEach(obj, function() {
 			empty = false;
-			break;
-		}
+			return false;
+		});
 		return empty;
 	},
 	handlers: {
@@ -666,7 +666,7 @@ core.list.prototype = {
 		return new core(this.items[i]);
 	},
 	last: function() {
-		return new core(this.items[this.items.length - 1] || false);
+		return new core(this.items[this.items.length - 1]);
 	},
 	size: function() {
 		return this.items.length;
@@ -683,7 +683,7 @@ core.extend(core.list.prototype, function(slice) {
 		var length = (args = slice.call(args, 1)).length < 2;
 		return length ? {method: 'call', args: args[0]} : {method: 'apply', args: args};
 	}
-	core.forEach('resize,scroll,blur,focus,error,abort,load,unload,click,dblclick,mousedown,mouseup,mousemove,mouseover,mouseout,keydown,keypress,keyup,change,select,submit,reset'.split(','), function(listener) {
+	core.forEach('resize,scroll,blur,focus,error,abort,onload,unload,click,dblclick,mousedown,mouseup,mousemove,mouseover,mouseout,keydown,keypress,keyup,change,select,submit,reset'.split(','), function(listener) {
 		return function(type) {
 			core.prototype[type] = function(arg) {
 				return arg ? this.bind(type, arg.call ? arg : listener(arg, arguments)) : this.node[type]();
@@ -826,14 +826,30 @@ core.extend(core.trim, {
 	}
 });
 win.core = win.$ ? core : (win.$ = core);
-(function(type, listener) {
-	ie ? doc.write(unescape('%3CSCRIPT onreadystatechange="if(this.readyState==\'complete\') core.ready()" defer="defer" src="\/\/:"%3E%3C/SCRIPT%3E')) : doc.addEventListener(type, listener, false);
+(function(listener) {
+	ie ? doc.write(unescape('%3CSCRIPT onreadystatechange="if(this.readyState==\'complete\') core.ready()" defer="defer" src="\/\/:"%3E%3C/SCRIPT%3E')) : doc.addEventListener('DOMContentLoaded', listener, false);
 	if(/KHTML|WebKit/i.test(navigator.userAgent)) (function() {
 		/loaded|complete/.test(doc.readyState) ? core.ready() : setTimeout(arguments.callee, 10);
 	})();
 	core.bind(win, 'load', listener);
-})('DOMContentLoaded', function() {
+})(function() {
+	core.unbind(doc, 'DOMContentLoaded', arguments.callee);
+	core.unbind(win, 'load', arguments.callee);
 	core.ready();
+});
+core.bind(win, 'unload', function() {
+	delete core.cache;
+	delete core.storage;
+	delete core.handlers.guid;
+	delete core.handlers.fid;
+	delete core.handlers.createListener;
+	core.forEach(core.handlers, function(guid, handler) {
+		core.forEach(handler.events, function(type) {
+			core.unbind(handler.link, type, handler.listener);
+		}, handler);
+	});
+	delete core.handlers;
+	core.unbind(win, 'unload', arguments.callee);
 });
 })(window, document, function(arg) {
 	if(this.core) return new core(arg);

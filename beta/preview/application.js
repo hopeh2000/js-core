@@ -20,7 +20,10 @@ $.ready(function() {
 			// visible
 			hide = false;
 			// change text and show
-			tooltip.html(this.tooltip).show();
+			tooltip.node.innerHTML = this.tooltip;
+			setTimeout(function() {
+				tooltip.show();
+			}, 150);
 			// start decreasing operations onmousemove
 			timer.start();
 		};
@@ -41,9 +44,7 @@ $.ready(function() {
 			$(this).mouseover(show).mouseout(hide).mousemove(function(e) {
 				// calculate position left
 				if(change) style.left = $.event(e).mousePosition().x - 26 + 'px';
-			}).focus(function(e) {
-				// create event object
-				var event = $.event(e);
+			}).focus(function() {
 				// calculate position left
 				style.left = $(this).position().left - 26 + Math.round(this.offsetWidth / 2) + 'px';
 				// show tooltip
@@ -54,8 +55,9 @@ $.ready(function() {
 			// remove native tooltip for title attribute
 			this.title = '';
 		});
-	});
 
+	});
+	
 	// get elements by class name
 	var examples = $.findClass('example');
 
@@ -307,9 +309,5 @@ $.ready(function() {
 		if($.ie == 6) $(this).mouseover('addClass', 'hover').mouseout('removeClass', 'hover');
 		$(this).focus('addClass', 'hover').blur('removeClass', 'hover').mousedown('addClass', 'active').mouseup('removeClass', 'active');
 	});
-	
-	var input = $.parse('<input type="button" value="Button">').click('enabled', false);
-	input.appendTo('header');
-	input.clone().attr('value', 'Clone').appendTo('header');
 
 });
