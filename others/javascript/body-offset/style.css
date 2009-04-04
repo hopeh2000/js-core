@@ -1,0 +1,19 @@
+@charset "utf-8";
+html {
+background: #ccf;
+}
+body {
+position: relative;
+width: 500px;
+margin: 10% auto;
+padding: 20px;
+border: 10px solid #f00;
+background: #ffc;
+}
+.rect {
+position: absolute;
+width: 100px;
+height: 100px;
+background: #000;
+}
+
