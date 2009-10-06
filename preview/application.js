@@ -36,7 +36,7 @@ $.ready(function() {
 				}
 			}, 300);
 		}
-		$(this).first('ul').children('a').each(function() {
+		$(this).first('ul').descendants('a').each(function() {
 			$(this).focus(show).blur(hide).mouseover(show).mouseout(hide).attr('tooltip', this.title).node.removeAttribute('title');
 		});
 	});
@@ -47,9 +47,9 @@ $.ready(function() {
 	function args(example) {
 		var	button = example.first('button'),
 				temp = example.first('div'),
-				dom = temp.children('span'),
-				javascript = temp.next('div').children('code'),
-				actions = example.first('ol').child('li');
+				dom = temp.descendants('span'),
+				javascript = temp.next('div').descendants('code'),
+				actions = example.first('ol').children('li');
 		return [button, dom, javascript, actions];
 	}
 

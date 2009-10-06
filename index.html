@@ -23,7 +23,7 @@
 <div id="container">
 	<div id="header">
 		<h1><a href="http://www.js-core.ru/">js-core JavaScript framework</a></h1>
-		<span>Версия 2.8.1</span>
+		<span>Версия 3a</span>
 		<ul>
 			<li class="web-site"><a href="http://www.js-core.ru/" title="Веб-сайт проекта js-core.ru" tabindex="1">Веб-сайт</a></li>
 			<li class="downloads"><a href="http://code.google.com/p/js-core/downloads/list" title="Различные версии и сборки js-core, расширения и модули, документация"  tabindex="2">Скачать</a></li>
@@ -56,7 +56,7 @@
 				<code class="tag"><span>&lt;ul id=&quot;list&quot;&gt;</span><code class="tag"><span>&lt;li&gt;</span><code class="text">Текст</code></code><code class="tag"><span>&lt;li&gt;</span><code class="text">Текст</code></code></code> </div>
 			<div class="code">
 				<label>JavaScript</label>
-				<pre><code>$(&quot;list&quot;)</code>.<code>child()</code>.<code>each(&quot;addClass&quot;, &quot;some&quot;)</code>;</pre>
+				<pre><code>$(&quot;list&quot;)</code>.<code>children()</code>.<code>each(&quot;addClass&quot;, &quot;some&quot;)</code>;</pre>
 			</div>
 			<ol>
 				<li>Поиск элемента с&nbsp;идентификатором «list»</li>
@@ -72,7 +72,7 @@
 				<code class="tag"><span>&lt;fieldset id=&quot;some&quot;&gt;</span><code class="tag">&lt;form&gt;<code class="tag">&lt;div&gt;<code class="tag"><span>&lt;span&gt;</span><code class="text">Текст</code></code></code><code class="tag">&lt;div&gt;<code class="tag"><span>&lt;span&gt;</span><code class="text">Текст</code></code></code></code></code> </div>
 			<div class="code">
 				<label>JavaScript</label>
-				<pre><code>$(&quot;some&quot;)</code>.<code>children(&quot;span&quot;)</code>.<code>get(1)</code>;</pre>
+				<pre><code>$(&quot;some&quot;)</code>.<code>descendants(&quot;span&quot;)</code>.<code>get(1)</code>;</pre>
 			</div>
 			<ol>
 				<li>Поиск элемента с&nbsp;идентификатором «some»</li>
@@ -154,8 +154,8 @@
 	</div>
 	<div id="footer"><span class="vcard">&copy;&nbsp;<a class="url fn n" href="http://www.designwizard.ru/" title="Перейти на сайт автора"><span class="given-name">Дмитрий</span>&nbsp;<span class="family-name">Коробкин</span></a>,&nbsp;2009</span></div>
 </div>
-<script type="text/javascript" src="framework/js-core.min.js"></script>
-<script type="text/javascript" src="modules/ajax/js-core.ajax.min.js"></script>
+<script type="text/javascript" src="framework/js-core.js"></script>
+<script type="text/javascript" src="modules/ajax/js-core.ajax.js"></script>
 <script type="text/javascript" src="preview/application.js"></script>
 </body>
 </html>
