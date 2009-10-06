@@ -1,0 +1,8 @@
+• Переименован следующие методы:
+	· children → descendants
+	· child → children
+• Удален метод isNumber
+
+[planned]
+• Расширить функциональность метода exist:
+	$(…).exist("method" [, arguments]);
