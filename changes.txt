@@ -1,8 +1,40 @@
 • Переименован следующие методы:
 	· children → descendants
 	· child → children
+
 • Удален метод isNumber
 
 [planned]
+
 • Расширить функциональность метода exist:
 	$(…).exist("method" [, arguments]);
+
+• Добавить возможность контролировать, что изменять свойство или атрибут DOM-элемента.
+  Необходимо, например для решения поблем, когда в IE нужно задавать значения атрибутов
+  name, type, enctype и action именно через setAttribute.
+
+• Добавить fix для удаления свойст DOM-элементов в IE:
+	function removeProperty(node, prop) {
+		if(ie && node.nodeType) {
+			node.removeAttribute(prop);
+		} else {
+			delete node[prop];
+		}
+	} 
+  Чтобы решить проблему:
+		var node = document.createElement("div");
+		node.prop = 1;
+
+		// 1-й способ:
+		delete node.prop; // вызовет ошибку в IE6,7
+
+		// 2-й способ не решает проблему с оператором in:
+		node.prop = undefined;
+		alert("prop" in node); // true
+
+		// 3-й способ использует тот факт, что в IE
+		// упрощена модель работы со свойствами и атрибутами:
+		node.removeAttribute("prop");
+		alert("prop" in node); // false в IE
+
+• Оптимизировать работу метода «css» (получать compudetStyle один раз для каждого элемента).
