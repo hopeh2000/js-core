@@ -38,3 +38,5 @@
 		alert("prop" in node); // false в IE
 
 • Оптимизировать работу метода «css» (получать compudetStyle один раз для каждого элемента).
+• Добавить кросс-браузерную реализацию dataset:
+	http://www.w3.org/TR/html5/dom.html#embedding-custom-non-visible-data
