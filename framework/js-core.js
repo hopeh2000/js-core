@@ -222,7 +222,9 @@ Core.extend(Core, {
 		return Array.prototype.slice.call(list);
 	},
 	list: function(items, filter) {
-		if(this.list) return new this.list(items, filter);
+		if(! this.isCoreList) {
+			return new Core.list(items, filter);
+		}
 		if(filter === false) this.items = items || [];
 		else {
 			var i = -1, j = 0, k = 0, length = items.length;
@@ -232,7 +234,7 @@ Core.extend(Core, {
 		return this;
 	},
 	timer: function(time, func, context) {
-		return this.timer ? new this.timer(time, func, context) : Core.extend(this, {time: time, func: func, context: context, enabled: false});
+		return this.isCoreTimer ? Core.extend(this, {time: time, func: func, context: context, enabled: false}) : new Core.timer(time, func, context);
 	},
 	preventDefault: Core.IE ? function(event) {
 		event.returnValue = false;
@@ -825,6 +827,7 @@ Core.extend(Core.prototype, function(traversal, sibling, child) {
 	};
 }());
 Core.list.prototype = {
+	isCoreList: true,
 	get: function(index) {
 		return index === undefined ? this.items : new Core(this.items[index]);
 	},
@@ -901,13 +904,14 @@ Core.restore = Core.prototype.restore = Core.list.prototype.restore = function()
 	return storage;
 };
 Core.timer.prototype = {
+	isCoreTimer: true,
 	start: function() {
 		if(!this.enabled) {
 			var timer = this;
 			timer.enabled = true;
-			(function() {
+			(function func() {
 				timer.func.call(timer.context, timer);
-				if(timer.enabled) setTimeout(arguments.callee, timer.time);
+				if(timer.enabled) setTimeout(func, timer.time);
 			})();
 		}
 		return this;
@@ -920,9 +924,9 @@ Core.timer.prototype = {
 		if(!this.enabled) {
 			var timer = this;
 			timer.enabled = true;
-			(function() {
+			(function func() {
 				timer.func.call(timer.context, timer);
-				if(timer.enabled && --amount) setTimeout(arguments.callee, timer.time);
+				if(timer.enabled && --amount) setTimeout(func, timer.time);
 				else {
 					timer.enabled = false;
 					if(callback) callback.call(context || timer.context, timer);
@@ -942,13 +946,13 @@ Core.timer.prototype = {
 		Core.doc.write(unescape('%3CSCRIPT onreadystatechange="if(this.readyState==\'complete\') Core.ready()" defer="defer" src="\/\/:"%3E%3C/SCRIPT%3E'));
 	}
 	return undefined;
-})(function() {
-	Core.unbind(Core.doc, "DOMContentLoaded", arguments.callee);
-	Core.unbind(Core.win, "load", arguments.callee);
+})(function func() {
+	Core.unbind(Core.doc, "DOMContentLoaded", func);
+	Core.unbind(Core.win, "load", func);
 	Core.ready();
 	return undefined;
 });
-Core.bind(Core.win, "unload", function() {
+Core.bind(Core.win, "unload", function func() {
 	delete Core.cache;
 	delete Core.storage;
 	delete Core.handlers.guid;
@@ -960,7 +964,7 @@ Core.bind(Core.win, "unload", function() {
 		}, handler);
 	});
 	delete Core.handlers;
-	Core.unbind(Core.win, "unload", arguments.callee);
+	Core.unbind(Core.win, "unload", func);
 });
 if(typeof $ == "undefined") {
 	this.$ = Core;
