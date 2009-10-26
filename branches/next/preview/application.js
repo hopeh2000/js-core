@@ -287,10 +287,11 @@ $.ready(function() {
 
 	}).apply(this, args(examples.get(6)));
 
+	// todo Core.IE
 	// fix :hover and :active for IE6,7
-	if($.ie < 8) $.tag('button').each(function() {
-		if($.ie == 6) $(this).mouseover('addClass', 'hover').mouseout('removeClass', 'hover');
-		$(this).focus('addClass', 'hover').blur('removeClass', 'hover').mousedown('addClass', 'active').mouseup('removeClass', 'active');
-	});
+	//if($.ie < 8) $.tag('button').each(function() {
+	//	if($.ie == 6) $(this).mouseover('addClass', 'hover').mouseout('removeClass', 'hover');
+	//	$(this).focus('addClass', 'hover').blur('removeClass', 'hover').mousedown('addClass', 'active').mouseup('removeClass', 'active');
+	//});
 
 });

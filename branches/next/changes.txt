@@ -3,6 +3,8 @@
 	· child → children
 
 • Удален метод isNumber
+• Глобальный объект «core» теперь называется «Core»
+• Свойство core.ie теперь доступно, как Core.IE 
 
 [planned]
 

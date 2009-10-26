@@ -1,14 +1,15 @@
-/* js-core AJAX module, version 0.2.7
+/* js-core AJAX module, version 0.3.0
    Copyright (c) 2009 Dmitry Korobkin
-   Released under the MIT License.
+   Released under the MIT License
    More information: http://www.js-core.ru/
-	Warning: do not use timeout for more then 2 XHR at one time!
+   Warning: do not use timeout for more then 2 XHR at one time!
 */
-core.ajax = function() {
+Core.ajax = function() {
 	if(this.ajax) return new this.ajax();
-	this.xhr = window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
+	this.xhr = typeof XMLHttpRequest == "undefined" ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest;
+	return this;
 };
-core.ajax.type = {
+Core.ajax.type = {
 	html: 'text/html',
 	text: 'text/plain',
 	xml: 'application/xml, text/xml',
@@ -16,9 +17,9 @@ core.ajax.type = {
 	script: 'text/javascript, application/javascript',
 	'default': 'application/x-www-form-urlencoded'
 };
-core.ajax.accept = '*\/*';
-core.ajax.prototype.open = function(params) {
-	core.extend(this, {
+Core.ajax.accept = '*\/*';
+Core.ajax.prototype.open = function(params) {
+	Core.extend(this, {
 		method: params.method || 'GET',
 		url: params.url || location.href,
 		async: params.async !== false,
@@ -27,15 +28,16 @@ core.ajax.prototype.open = function(params) {
 		params: params.params || null,
 		processData: params.processData === true,
 		timeout: params.timeout || 0,
-		contentType: core.ajax.type[params.contentType] || core.ajax.type['default'],
-		dataType: core.ajax.type[params.dataType] ? core.ajax.type[params.dataType] + ', *\/*' : core.ajax.accept,
+		contentType: Core.ajax.type[params.contentType] || Core.ajax.type['default'],
+		dataType: Core.ajax.type[params.dataType] ? Core.ajax.type[params.dataType] + ', *\/*' : Core.ajax.accept,
 		requestHeaders: params.requestHeaders || null,
 		success: params.success,
 		error: params.error
 	});
 	if(this.params) {
-		var params = [], process = this.process;
-		core.forEach(this.params, function(key, value) {
+		var process = this.process;
+		params = [];
+		Core.forEach(this.params, function(key, value) {
 			params.push([key, '=', process ? encodeURIComponent(value) : value].join(''));
 		});
 		this.params = params.join('&');
@@ -46,7 +48,7 @@ core.ajax.prototype.open = function(params) {
 		this.xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 		this.xhr.setRequestHeader('Content-Type', this.contentType);
 		var ajax = this;
-		if(this.requestHeaders) core.forEach(this.requestHeaders, function(key, value) {
+		if(this.requestHeaders) Core.forEach(this.requestHeaders, function(key, value) {
 			ajax.xhr.setRequestHeader(key, value);
 		});
 		this.xhr.send(this.params);
@@ -69,16 +71,16 @@ core.ajax.prototype.open = function(params) {
 		if(this.error) this.error(error);
 	}
 };
-core.get = function(params, success, error) {
-	new core.ajax().open(core.extend(params, {success: success, error: error}));
+Core.get = function(params, success, error) {
+	new Core.ajax().open(Core.extend(params, {success: success, error: error}));
 	return this;
 };
-core.post = function(params, success, error) {
-	new core.ajax().open(core.extend(params, {method: 'POST', success: success, error: error}));
+Core.post = function(params, success, error) {
+	new Core.ajax().open(Core.extend(params, {method: 'POST', success: success, error: error}));
 	return this;
 };
-core.getJSON = function(params, callback, error) {
-	new core.ajax().open(core.extend(params, {dataType: 'json', success: function(response) {
+Core.getJSON = function(params, callback, error) {
+	new Core.ajax().open(Core.extend(params, {dataType: 'json', success: function(response) {
 		try {
 			// todo remove eval
 			callback(window.JSON && JSON.parse ? JSON.parse(response) : eval('(' + response + ')'));
@@ -89,9 +91,9 @@ core.getJSON = function(params, callback, error) {
 	}, error: error}));
 	return this;
 };
-core.prototype.load = function(params, success, error) {
+Core.prototype.load = function(params, success, error) {
 	var _this = this;
-	new core.ajax().open(core.extend(params, {success: function(response) {
+	new Core.ajax().open(Core.extend(params, {success: function(response) {
 		var control = /^INPUT|BUTTON|TEXTAREA$/;
 		_this[control.test(_this.node.tagName) ? 'val' : 'html'](response);
 		if(success) success.call(_this.node, response, this.xhr);
