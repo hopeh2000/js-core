@@ -64,7 +64,8 @@ Core.forEach = function(obj, func, context) {
 				}
 			}
 		}
-	} else {
+	}
+	else {
 		i = -1;
 		while(++i < length) {
 			// func → function(element, index, array, length) { this → context }
@@ -105,7 +106,7 @@ Core.extend(Core, {
 	 * @private
 	 */
 	id: function(arg) {
-		return typeof arg == "string" ? this.cache[arg] || (this.cache[arg] = Core.doc.getElementById(arg)) : arg;
+		return typeof arg == "string" ? this.cache[arg] || (this.cache[arg] = this.doc.getElementById(arg)) : arg;
 	},
 
 	/**
@@ -114,7 +115,7 @@ Core.extend(Core, {
 	 * @private
 	 */
 	create: function(arg) {
-		return typeof arg == "string" ? Core.doc.createElement(arg) : arg;
+		return typeof arg == "string" ? this.doc.createElement(arg) : arg;
 	},
 
 	/**
@@ -131,19 +132,19 @@ Core.extend(Core, {
 	 *
 	 * @private
 	 */
-	bind: typeof addEventListener == "undefined" ? function(node, type, listener) {
-		node.attachEvent("on" + type, listener);
-	} : function(node, type, listener) {
+	bind: this.addEventListener ? function(node, type, listener) {
 		node.addEventListener(type, listener, false);
-	},
-	unbind: typeof removeEventListener == "undefined" ? function(node, type, listener) {
-		node.detachEvent("on" + type, listener);
 	} : function(node, type, listener) {
+		node.attachEvent("on" + type, listener);
+	},
+	unbind: this.removeEventListener ? function(node, type, listener) {
 		node.removeEventListener(type, listener, false);
+	} : function(node, type, listener) {
+		node.detachEvent("on" + type, listener);
 	},
 	isEmpty: function(obj) {
 		var empty = true;
-		Core.forEach(obj, function() {
+		this.forEach(obj, function() {
 			return empty = false;
 		});
 		return empty;
@@ -177,46 +178,51 @@ Core.extend(Core, {
 		}
 		return arg;
 	},
-	ready: function() {
-		var ready, list = [], i = -1;
+	ready: function(ready, list, i) {
 		return function(func) {
-			if(func) ready ? func() : list.push(func);
-			else if(!ready) {
+			if(func) {
+				ready ? func() : list.push(func);
+			}
+			else if(! ready) {
 				ready = true;
 				var length = list.length;
-				while(++i < length) list[i]();
+				while(++i < length) {
+					list[i]();
+				}
 				list = null;
 			}
 		};
-	}(),
+	}(false, [], -1),
 	context: function(func, context) {
 		return function _func(arg) {
 			return func.call(context, arg);
 		};
 	},
 	parse: function(html) {
-		var div = Core.doc.createElement("div");
-		div.innerHTML = html;
-		return new Core(div.firstChild);
+		var node = this.doc.createElement("div");
+		node.innerHTML = html;
+		return new this(node.firstChild);
 	},
 	n: function(tag) {
-		return new Core(Core.doc.createElement(tag));
+		return new this(this.doc.createElement(tag));
 	},
 	tag: function(tags) {
-		return new Core(Core.doc).children(tags, true);
+		return new this(this.doc).children(tags, true);
 	},
 	find: function(attrs, tags) {
-		return new Core(Core.doc).find(attrs, tags);
+		return new this(this.doc).find(attrs, tags);
 	},
 	findAttr: function(attr, values, tags) {
-		return new Core(Core.doc).findAttr(attr, values, tags);
+		return new this(this.doc).findAttr(attr, values, tags);
 	},
 	findClass: function(classes, tags) {
-		return new Core(Core.doc).findClass(classes, tags);
+		return new this(this.doc).findClass(classes, tags);
 	},
 	makeArray: Core.IE ? function(list) {
 		var i = -1, length = list.length, array = [];
-		while(++i < length) array[i] = list[i];
+		while(++i < length) {
+			array[i] = list[i];
+		}
 		return array;
 	} : function(list) {
 		return Array.prototype.slice.call(list);
@@ -225,11 +231,17 @@ Core.extend(Core, {
 		if(! this.isCoreList) {
 			return new Core.list(items, filter);
 		}
-		if(filter === false) this.items = items || [];
+		if(filter === false) {
+			this.items = items || [];
+		}
 		else {
 			var i = -1, j = 0, k = 0, length = items.length;
 			this.items = [];
-			while(++i < length) if(items[i].nodeType == 1 && (filter ? filter.call(items[i], j++) : true)) this.items[k++] = items[i];
+			while(++i < length) {
+				if(items[i].nodeType == 1 && (filter ? filter.call(items[i], j++) : true)) {
+					this.items[k++] = items[i];
+				}
+			}
 		}
 		return this;
 	},
@@ -283,7 +295,7 @@ Core.extend(Core, {
 	computedStyle: Core.IE ? function(node) {
 		return node.currentStyle;
 	} : function(node) {
-		return Core.doc.defaultView.getComputedStyle(node, null);
+		return this.doc.defaultView.getComputedStyle(node, null);
 	}
 });
 (function(calc) {
@@ -311,9 +323,14 @@ Core.prototype = {
 	parent: function(tag) {
 		var node = this.node.parentNode;
 		if(tag) {
-			tag = tag.toUpperCase();
-			do if(node.tagName == tag) break;
-			while(node = node.parentNode);
+			tag = tag.toLowerCase();
+			do {
+				if(node.nodeName.toLowerCase() == tag) {
+					break;
+				}
+				node = node.parentNode;
+			}
+			while(node);
 		}
 		return new Core(node);
 	},
@@ -366,7 +383,9 @@ Core.prototype = {
 			Core.forEach(handler.events, function(type) {
 				Core.bind(this.link, type, this.listener);
 			}, handler);
-			if(cloneHandlers) list.get(index).copyHandlers(handler.link);
+			if(cloneHandlers) {
+				list.get(index).copyHandlers(handler.link);
+			}
 		});
 		return clone;
 	},
@@ -385,7 +404,7 @@ Core.prototype = {
 			});
 			return new Core(nodes).appendTo(this.append(arg).node);
 		}
-		else return this.appendTo(this.before(arg).node);
+		return this.appendTo(this.before(arg).node);
 	},
 	el: function(arg) {
 		return arg ? this.replace(Core.id(arg)) : this.node;
@@ -838,8 +857,12 @@ Core.list.prototype = {
 		return this.items.length;
 	},
 	add: function(args) {
-		if(!this.items.join) this.items = Core.makeArray(this.items);
-		if(!args.join && args.length !== undefined) args = Core.makeArray(args);
+		if(! this.items.join) {
+			this.items = Core.makeArray(this.items);
+		}
+		if(! args.join && "length" in args) {
+			args = Core.makeArray(args);
+		}
 		this.items = this.items.concat(args);
 		return this;
 	}
@@ -909,9 +932,9 @@ Core.timer.prototype = {
 		if(!this.enabled) {
 			var timer = this;
 			timer.enabled = true;
-			(function func() {
+			(function callee() {
 				timer.func.call(timer.context, timer);
-				if(timer.enabled) setTimeout(func, timer.time);
+				if(timer.enabled) setTimeout(callee, timer.time);
 			})();
 		}
 		return this;
@@ -924,9 +947,9 @@ Core.timer.prototype = {
 		if(!this.enabled) {
 			var timer = this;
 			timer.enabled = true;
-			(function func() {
+			(function callee() {
 				timer.func.call(timer.context, timer);
-				if(timer.enabled && --amount) setTimeout(func, timer.time);
+				if(timer.enabled && --amount) setTimeout(callee, timer.time);
 				else {
 					timer.enabled = false;
 					if(callback) callback.call(context || timer.context, timer);
@@ -938,21 +961,24 @@ Core.timer.prototype = {
 };
 (function(listener) {
 	Core.bind(Core.win, "load", listener);
-	if(! Core.IE) return Core.doc.addEventListener("DOMContentLoaded", listener, false);
-	try {
-		element.doScroll("left");
+	if(Core.IE) {
+		try {
+			element.doScroll("left");
+		}
+		catch(error) {
+			Core.doc.write(unescape('%3CSCRIPT onreadystatechange="if(this.readyState==\'complete\') Core.ready()" defer="defer" src="\/\/:"%3E%3C/SCRIPT%3E'));
+		}
 	}
-	catch(error) {
-		Core.doc.write(unescape('%3CSCRIPT onreadystatechange="if(this.readyState==\'complete\') Core.ready()" defer="defer" src="\/\/:"%3E%3C/SCRIPT%3E'));
+	else {
+		Core.doc.addEventListener("DOMContentLoaded", listener, false);
 	}
-	return undefined;
-})(function func() {
-	Core.unbind(Core.doc, "DOMContentLoaded", func);
-	Core.unbind(Core.win, "load", func);
+}(function callee() {
+	Core.unbind(Core.doc, "DOMContentLoaded", callee);
+	Core.unbind(Core.win, "load", callee);
 	Core.ready();
-	return undefined;
-});
-Core.bind(Core.win, "unload", function func() {
+}));
+Core.bind(Core.win, "unload", function callee() {
+	Core.unbind(Core.win, "unload", callee);
 	delete Core.cache;
 	delete Core.storage;
 	delete Core.handlers.guid;
@@ -964,8 +990,9 @@ Core.bind(Core.win, "unload", function func() {
 		}, handler);
 	});
 	delete Core.handlers;
-	Core.unbind(Core.win, "unload", func);
 });
+
+// Создаем короткую ссылку на Core
 if(typeof $ == "undefined") {
 	this.$ = Core;
 }
