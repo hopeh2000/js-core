@@ -123,15 +123,6 @@ Core.extend(Core, {
 	 *
 	 * @private
 	 */
-	_insert: function _insert(node, arg, before) {
-		return node.insertBefore(this._create(arg), before);
-	},
-
-	/**
-	 *
-	 *
-	 * @private
-	 */
 	bind: this.addEventListener ? function _bind(node, type, listener) {
 		node.addEventListener(type, listener, false);
 	} : function _bind(node, type, listener) {
@@ -340,39 +331,41 @@ Core.prototype = {
 		return new Core(this.node.appendChild(Core._create(arg)));
 	},
 	prepend: function prepend(arg) {
-		return new Core(Core._insert(this.node, arg, this.node.firstChild));
+		return new Core(this.node.insertBefore(Core._create(arg), this.node.firstChild));
 	},
 	after: function after(arg) {
-		return new Core(Core._insert(this.node.parentNode, arg, this.node.nextSibling));
+		return new Core(this.node.parentNode.insertBefore(Core._create(arg), this.node.nextSibling));
 	},
 	before: function before(arg) {
-		return new Core(Core._insert(this.node.parentNode, arg, this.node));
+		return new Core(this.node.parentNode.insertBefore(Core._create(arg), this.node));
 	},
 	appendTo: function appendTo(arg) {
 		(arg = new Core(arg)).node.appendChild(this.node);
 		return arg;
 	},
 	prependTo: function prependTo(arg) {
-		Core._insert((arg = new Core(arg)).node, this.node, arg.node.firstChild);
+		(arg = new Core(arg)).node.insertBefore(this.node, arg.node.firstChild);
 		return arg;
 	},
 	insertAfter: function insertAfter(arg) {
-		var node = Core._id(arg);
-		return new Core(Core._insert(node.parentNode, this.node, node.nextSibling));
+		var obj = new Core(arg);
+		obj.node.parentNode.insertBefore(this.node, obj.node.nextSibling);
+		return obj;
 	},
 	insertBefore: function insertBefore(arg) {
-		var node = Core._id(arg);
-		return new Core(Core._insert(node.parentNode, this.node, node));
+		var obj = new Core(arg);
+		obj.node.parentNode.insertBefore(this.node, obj.node);
+		return obj;
 	},
 	clone: function clone(cloneChild, cloneHandlers) {
 		cloneChild = cloneChild !== false;
 		cloneHandlers = cloneHandlers !== false;
 		var list = cloneChild ? this.children(true).add(this.node) : new Core.list([this.node]), clone, guid, handler, data = {};
-		list.each(function (index) {
+		list.each(function temporallyRemoveListeners(index) {
 			guid = this.guid;
 			this.guid = null;
 			if (guid && Core._handlers[guid]) {
-				Core.forEach(Core._handlers[guid].events, function (type) {
+				Core.forEach(Core._handlers[guid].events, function unbindListeners(type) {
 					Core.unbind(this, type, Core._handlers[guid].listener);
 				}, this);
 				data[guid] = index;
@@ -380,9 +373,9 @@ Core.prototype = {
 		});
 		clone = new Core(this.node.cloneNode(cloneChild));
 		list = cloneChild ? clone.children(true).add(clone.node) : new Core.list([clone.node]);
-		Core.forEach(data, function (guid, index) {
+		Core.forEach(data, function restoreListeners(guid, index) {
 			(handler = Core._handlers[guid]).node.guid = guid;
-			Core.forEach(handler.events, function (type) {
+			Core.forEach(handler.events, function bindListeners(type) {
 				Core.bind(this.node, type, this.listener);
 			}, handler);
 			if (cloneHandlers) {
