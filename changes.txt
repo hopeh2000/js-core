@@ -11,6 +11,8 @@
 • Удалент метод Core.insert(…)
 • Методы Core(…).insertBefore(…) и Core(…).insertAfter(…) теперь продолжают
   цепочку аналогично Core(…).appendTo(…) и Core(…).prependTo(…)
+• Метод Core.bind(…) переименован в Core.observe(…)
+• Метод Core.unbind(…) переименован в Core.stopObserve(…)
 
 [planned]
 

@@ -24,17 +24,18 @@ function Core(arg) {
 	return this;
 }
 
-// Ссылки для быстрого доступа
 /**
  * Ссылка на window
  * @private
  */
-Core._win = this;
+Core._win = window;
+
 /**
  * Ссылка на document
  * @private
  */
-Core._doc = this.document;
+Core._doc = document;
+
 /**
  * Internet Explorer
  * @type Boolean
@@ -117,22 +118,6 @@ Core.extend(Core, {
 	_create: function _create(arg) {
 		return typeof arg == "string" ? this._doc.createElement(arg) : arg;
 	},
-
-	/**
-	 *
-	 *
-	 * @private
-	 */
-	bind: this.addEventListener ? function _bind(node, type, listener) {
-		node.addEventListener(type, listener, false);
-	} : function _bind(node, type, listener) {
-		node.attachEvent("on" + type, listener);
-	},
-	unbind: this.removeEventListener ? function _unbind(node, type, listener) {
-		node.removeEventListener(type, listener, false);
-	} : function _unbind(node, type, listener) {
-		node.detachEvent("on" + type, listener);
-	},
 	isEmpty: function (obj) {
 		var empty = true;
 		this.forEach(obj, function () {
@@ -168,6 +153,22 @@ Core.extend(Core, {
 			}
 		}
 		return arg;
+	},
+
+	/**
+	 *
+	 *
+	 *
+	 */
+	observe: window.addEventListener ? function observe(node, type, listener) {
+		node.addEventListener(type, listener, false);
+	} : function observe(node, type, listener) {
+		node.attachEvent("on" + type, listener);
+	},
+	stopObserving: window.removeEventListener ? function stopObserving(node, type, listener) {
+		node.removeEventListener(type, listener, false);
+	} : function stopObserving(node, type, listener) {
+		node.detachEvent("on" + type, listener);
 	},
 	ready: function (ready, list, i) {
 		return function (func) {
@@ -366,7 +367,7 @@ Core.prototype = {
 			this.guid = null;
 			if (guid && Core._handlers[guid]) {
 				Core.forEach(Core._handlers[guid].events, function unbindListeners(type) {
-					Core.unbind(this, type, Core._handlers[guid].listener);
+					Core.stopObserving(this, type, Core._handlers[guid].listener);
 				}, this);
 				data[guid] = index;
 			}
@@ -376,7 +377,7 @@ Core.prototype = {
 		Core.forEach(data, function restoreListeners(guid, index) {
 			(handler = Core._handlers[guid]).node.guid = guid;
 			Core.forEach(handler.events, function bindListeners(type) {
-				Core.bind(this.node, type, this.listener);
+				Core.observe(this.node, type, this.listener);
 			}, handler);
 			if (cloneHandlers) {
 				list.get(index).copyHandlers(handler.node);
@@ -437,7 +438,7 @@ Core.prototype = {
 		};
 		if (type && !Core._handlers[guid].events[type]) {
 			Core._handlers[guid].events[type] = {};
-			Core.bind(this.node, type, Core._handlers[guid].listener);
+			Core.observe(this.node, type, Core._handlers[guid].listener);
 		}
 		if (func) {
 			if (!func.fid) func.fid = Core._handlers.fid++;
@@ -456,12 +457,12 @@ Core.prototype = {
 			}
 			else if (type) {
 				delete events[type];
-				Core.unbind(this.node, type, handler.listener);
+				Core.stopObserving(this.node, type, handler.listener);
 				if (Core.isEmpty(handler.events)) delete Core._handlers[this.node.guid];
 			}
 			else {
 				Core.forEach(events, function (type) {
-					Core.unbind(this, type, handler.listener);
+					Core.stopObserving(this, type, handler.listener);
 				}, this.node);
 				delete Core._handlers[this.node.guid];
 			}
@@ -477,7 +478,7 @@ Core.prototype = {
 			else Core.forEach(handler.events, function (type, list) {
 				if (!this.events[type]) {
 					this.events[type] = list;
-					Core.bind(node, type, this.listener);
+					Core.observe(node, type, this.listener);
 				}
 				else Core.extend(this.events[type], list);
 			}, current);
@@ -920,11 +921,11 @@ Core.extend(Core.list.prototype, function (slice) {
 	};
 }(Array.prototype.slice));
 Core.prototype.store = Core.list.prototype.store = function () {
-	return Core.storage = this;
+	return Core._storage = this;
 };
 Core.restore = Core.prototype.restore = Core.list.prototype.restore = function () {
-	var storage = Core.storage;
-	delete Core.storage;
+	var storage = Core._storage;
+	delete Core._storage;
 	return storage;
 };
 Core.timer.prototype = {
@@ -961,7 +962,7 @@ Core.timer.prototype = {
 	}
 };
 (function (listener) {
-	Core.bind(Core._win, "load", listener);
+	Core.observe(Core._win, "load", listener);
 	if (Core.IE) {
 		try {
 			element.doScroll("left");
@@ -974,20 +975,20 @@ Core.timer.prototype = {
 		Core._doc.addEventListener("DOMContentLoaded", listener, false);
 	}
 }(function callee() {
-	Core.unbind(Core._doc, "DOMContentLoaded", callee);
-	Core.unbind(Core._win, "load", callee);
+	Core.stopObserving(Core._doc, "DOMContentLoaded", callee);
+	Core.stopObserving(Core._win, "load", callee);
 	Core.ready();
 }));
-Core.bind(Core._win, "unload", function callee() {
-	Core.unbind(Core._win, "unload", callee);
+Core.observe(Core._win, "unload", function callee() {
+	Core.stopObserving(Core._win, "unload", callee);
 	delete Core._cache;
-	delete Core.storage;
+	delete Core._storage;
 	delete Core._handlers.guid;
 	delete Core._handlers.fid;
 	delete Core._handlers.createListener;
 	Core.forEach(Core._handlers, function (guid, handler) {
 		Core.forEach(handler.events, function (type) {
-			Core.unbind(handler.node, type, handler.listener);
+			Core.stopObserving(handler.node, type, handler.listener);
 		}, handler);
 	});
 	delete Core._handlers;
@@ -995,5 +996,5 @@ Core.bind(Core._win, "unload", function callee() {
 
 // Создаем короткую ссылку на Core
 if (typeof $ == "undefined") {
-	this.$ = Core;
+	window.$ = Core;
 }
