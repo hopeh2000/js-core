@@ -86,7 +86,7 @@ Core.forEach = function forEach(obj, func, context) {
  * @returns Исходный объект
  */
 Core.extend = function extend(obj, hash) {
-	this.forEach(hash, function (key, value) {
+	this.forEach(hash, function copyProperties(key, value) {
 		obj[key] = value;
 	});
 	return obj;
@@ -106,6 +106,16 @@ Core.extend(Core, {
 	 *
 	 * @private
 	 */
+	_attrs: {
+		htmlFor: "for",
+		className: "class"
+	},
+
+	/**
+	 *
+	 *
+	 * @private
+	 */
 	_id: function _id(arg) {
 		return typeof arg == "string" ? this._cache[arg] || (this._cache[arg] = this._doc.getElementById(arg)) : arg;
 	},
@@ -118,13 +128,12 @@ Core.extend(Core, {
 	_create: function _create(arg) {
 		return typeof arg == "string" ? this._doc.createElement(arg) : arg;
 	},
-	isEmpty: function (obj) {
-		var empty = true;
-		this.forEach(obj, function () {
-			return empty = false;
-		});
-		return empty;
-	},
+
+	/**
+	 *
+	 *
+	 * @private
+	 */
 	_handlers: {
 		guid: 1,
 		fid: 1,
@@ -138,11 +147,13 @@ Core.extend(Core, {
 			};
 		}
 	},
-	attrs: {
-		htmlFor: "for",
-		className: "class"
-	},
-	toArray: function (arg) {
+
+	/**
+	 *
+	 *
+	 * @private
+	 */
+	_toArray: function _toArray(arg) {
 		if (typeof arg == "string") {
 			var i = -1, j = 0, array = arg.split(" "), length = array.length;
 			arg = [];
@@ -153,6 +164,15 @@ Core.extend(Core, {
 			}
 		}
 		return arg;
+	},
+
+	isEmpty: function isEmpty(obj) {
+		for (var prop in obj) {
+			if (obj.hasOwnProperty(prop)) {
+				return false;
+			}
+		}
+		return true;
 	},
 
 	/**
@@ -170,7 +190,7 @@ Core.extend(Core, {
 	} : function stopObserving(node, type, listener) {
 		node.detachEvent("on" + type, listener);
 	},
-	ready: function (ready, list, i) {
+	ready: function ready(ready, list, i) {
 		return function (func) {
 			if (func) {
 				ready ? func() : list.push(func);
@@ -185,8 +205,8 @@ Core.extend(Core, {
 			}
 		};
 	}(false, [], -1),
-	context: function (func, context) {
-		return function _func(arg) {
+	context: function context(func, context) {
+		return function wrapper(arg) {
 			return func.call(context, arg);
 		};
 	},
@@ -287,7 +307,7 @@ Core.extend(Core, {
 	computedStyle: Core.IE ? function computedStyle(node) {
 		return node.currentStyle;
 	} : function computedStyle(node) {
-		return this._doc.defaultView.getComputedStyle(node, null);
+		return node.ownerDocument.defaultView.getComputedStyle(node, null);
 	}
 });
 
@@ -386,6 +406,11 @@ Core.prototype = {
 		return clone;
 	},
 	replace: function replace(arg) {
+		// Просто replaceChild не используется,
+		// потомучто необходимо удалить обработчики
+		// событий заменяемого элемента и всех его
+		// детей во избежании повления утечек памяти
+		// из-за хранения ссылок на DOM-элементы.
 		arg = this.before(arg);
 		this.remove();
 		return arg;
@@ -407,11 +432,15 @@ Core.prototype = {
 	},
 	empty: function empty() {
 		this.children(true).each("remove", false);
-		while (this.node.firstChild) this.node.removeChild(this.node.firstChild);
+		while (this.node.firstChild) {
+			this.node.removeChild(this.node.firstChild);
+		}
 		return this;
 	},
 	remove: function remove(child) {
-		if (child !== false) this.empty();
+		if (child !== false) {
+			this.empty();
+		}
 		Core.clear(this.unbind().node).parentNode.removeChild(this.node);
 		return this;
 	},
@@ -493,7 +522,7 @@ Core.prototype = {
 	hasClass: function hasClass(arg) {
 		if (arg) {
 			var className = " " + this.node.className + " ", exist = true;
-			Core.forEach(Core.toArray(arg), function (str) {
+			Core.forEach(Core._toArray(arg), function (str) {
 				return className.indexOf(" " + str + " ") == -1 ? exist = false : true;
 			});
 			return exist;
@@ -504,13 +533,13 @@ Core.prototype = {
 		var className = this.node.className, modified = false;
 		if (className) {
 			className = " " + className + " ";
-			Core.forEach(Core.toArray(classes), function (str) {
+			Core.forEach(Core._toArray(classes), function (str) {
 				if (className.indexOf(" " + str + " ") == - 1) {
 					className += str + " ";
 					modified = true;
 				}
 			});
-			if (modified) this.node.className = Core.toArray(className).join(" ");
+			if (modified) this.node.className = Core._toArray(className).join(" ");
 		}
 		else this.node.className = classes;
 		return this;
@@ -519,7 +548,7 @@ Core.prototype = {
 		if (classes) {
 			var modified = false, i = 0, className = [];
 			classes = " " + (classes.join ? classes.join(" ") : classes) + " ";
-			Core.forEach(Core.toArray(this.node.className), function (str) {
+			Core.forEach(Core._toArray(this.node.className), function (str) {
 				if (classes.indexOf(" " + str + " ") == -1) className[i++] = str;
 				else modified = true;
 			});
@@ -533,12 +562,12 @@ Core.prototype = {
 		if (classes2) {
 			if (className) {
 				var i = 0;
-				classes2 = Core.toArray(classes2);
+				classes2 = Core._toArray(classes2);
 				className = " " + className + " ";
-				Core.forEach(Core.toArray(classes1), function (str) {
+				Core.forEach(Core._toArray(classes1), function (str) {
 					className = className.replace(" " + str + " ", " " + classes2[i++] + " ");
 				});
-				this.node.className = Core.toArray(className).join(" ");
+				this.node.className = Core._toArray(className).join(" ");
 			}
 		}
 		else {
@@ -558,7 +587,7 @@ Core.prototype = {
 			arg[attr] = value;
 		}
 		else if (arg.join || arg.split) {
-			var attributes = Core.toArray(arg), length = attributes.length, i = -1, j = 0, result = [];
+			var attributes = Core._toArray(arg), length = attributes.length, i = -1, j = 0, result = [];
 			while (++i < length) result[j++] = this.node[attributes[i]];
 			return result.length == 1 ? result[0] : result;
 		}
@@ -566,7 +595,7 @@ Core.prototype = {
 		return this;
 	},
 	removeAttr: function removeAttr(attrs) {
-		var i = (attrs = Core.toArray(attrs)).length;
+		var i = (attrs = Core._toArray(attrs)).length;
 		while (i--) this.node[attrs[i]] = null;
 		return this;
 	},
@@ -600,7 +629,7 @@ Core.prototype = {
 				arg[property] = value;
 			}
 			else if (arg.split || arg.join) {
-				var properties = Core.toArray(arg), length = properties.length, i = -1, j = 0, result = [];
+				var properties = Core._toArray(arg), length = properties.length, i = -1, j = 0, result = [];
 				while (++i < length) result[j++] = get(this.node, properties[i]);
 				return result.length == 1 ? result[0] : result;
 			}
@@ -683,16 +712,16 @@ Core.prototype = {
 	find: Core._doc.querySelectorAll ? function (attrs, tags) {
 		var selector = [], i, j = 0;
 		if (attrs.split || attrs.join)  {
-			i = (attrs = Core.toArray(attrs)).length;
-			while (i--) selector[j++] = Core.attrs[attrs[i]] || attrs[i].toLowerCase();
+			i = (attrs = Core._toArray(attrs)).length;
+			while (i--) selector[j++] = Core._attrs[attrs[i]] || attrs[i].toLowerCase();
 		}
 		else Core.forEach(attrs, function (attr, value) {
-			selector[j++] = (Core.attrs[attr] || attr.toLowerCase()) + '="' + value + '"';
+			selector[j++] = (Core._attrs[attr] || attr.toLowerCase()) + '="' + value + '"';
 		});
 		selector = "[" + selector.join("][") + "]";
 		if (tags) {
 			var complex = [];
-			i = (tags = Core.toArray(tags)).length;
+			i = (tags = Core._toArray(tags)).length;
 			j = 0;
 			while (i--) complex[j++] = tags[i] + selector;
 			selector = complex.join(",");
@@ -701,7 +730,7 @@ Core.prototype = {
 	} : function (attrs, tags) {
 		var i = -1, n = 0, list = this.children(tags, true).items, length = list.length, key, array = [];
 		if (attrs.split || attrs.join) {
-			var j, k = (attrs = Core.toArray(attrs)).length;
+			var j, k = (attrs = Core._toArray(attrs)).length;
 			while (++i < length) {
 				j = k;
 				key = true;
@@ -722,15 +751,15 @@ Core.prototype = {
 		return new Core.list(array, false);
 	},
 	findAttr: Core._doc.querySelectorAll ? function (attr, values, tags) {
-		var selector = [], i = (values = Core.toArray(values)).length, j = 0, k = (tags = tags ? Core.toArray(tags) : [""]).length, n = i;
-		attr = Core.attrs[attr] || attr.toLowerCase();
+		var selector = [], i = (values = Core._toArray(values)).length, j = 0, k = (tags = tags ? Core._toArray(tags) : [""]).length, n = i;
+		attr = Core._attrs[attr] || attr.toLowerCase();
 		while (k--) {
 			while (i--) selector[j++] = tags[k] + "[" + attr + '~="' + values[i] + '"]';
 			i = n;
 		}
 		return new Core.list(this.node.querySelectorAll(selector.join(",")), false);
 	} : function (attr, values, tags) {
-		var i = -1, j, n = 0, k = (values = Core.toArray(values)).length, list = this.children(tags, true).items, length = list.length, key, value, array = [];
+		var i = -1, j, n = 0, k = (values = Core._toArray(values)).length, list = this.children(tags, true).items, length = list.length, key, value, array = [];
 		while (++i < length) {
 			j = k;
 			key = false;
@@ -754,7 +783,7 @@ Core.prototype = {
 				var i = -1, list = [];
 				if (tags === true || (!tags && depth)) list = this.node.getElementsByTagName("*");
 				else if (tags) {
-					if (depth) list = (i = (tags = Core.toArray(tags)).length) == 1 ? this.node.getElementsByTagName(tags[0]) : find(this.node, tags, i);
+					if (depth) list = (i = (tags = Core._toArray(tags)).length) == 1 ? this.node.getElementsByTagName(tags[0]) : find(this.node, tags, i);
 					else {
 						var child = this.node[children], length = child.length, j = 0;
 						tags = " " + (tags.join ? tags.join(" ") : tags).toUpperCase() + " ";
@@ -777,10 +806,10 @@ Core.prototype = {
 	},
 	findClass: Core._doc.querySelectorAll ? function (classes, tags) {
 		var selector = [];
-		classes = Core.toArray(classes);
+		classes = Core._toArray(classes);
 		if (tags) {
 			var i, length = classes.length, j, k = 0;
-			i = (tags = Core.toArray(tags)).length;
+			i = (tags = Core._toArray(tags)).length;
 			while (i--) {
 				j = length;
 				while (j--) selector[k++] = tags[i] + "." + classes[j];
@@ -790,7 +819,7 @@ Core.prototype = {
 		else selector = "." + classes.join(",.");
 		return new Core.list(this.node.querySelectorAll(selector), false);
 	} : Core._doc.getElementsByClassName ? function (classes, tags) {
-		return !tags && (classes = Core.toArray(classes)).length == 1 ? new Core.list(this.node.getElementsByClassName(classes[0]), false) : this.findAttr("className", classes, tags);
+		return !tags && (classes = Core._toArray(classes)).length == 1 ? new Core.list(this.node.getElementsByClassName(classes[0]), false) : this.findAttr("className", classes, tags);
 	} : function (classes, tags) {
 		return this.findAttr("className", classes, tags);
 	}
