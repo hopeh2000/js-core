@@ -17,7 +17,7 @@ var element = document.documentElement || document.body; // todo remove this
  */
 function Core(arg) {
 	// Делаем необязательным использование оператора new
-	if (!this.isCore) {
+	if (this.constructor != Core) {
 		return new Core(arg);
 	}
 	this.node = Core._id(arg);
@@ -41,7 +41,7 @@ Core.IE = /*@cc_on!@*/false;
  * @type Array|Object
  * @returns obj
  */
-Core.forEach = function forEach(obj, func, thisObj) {
+Core.forEach = function (obj, func, thisObj) {
 	var length = obj.length, i = -1, key;
 	thisObj = thisObj || window;
 	if (length === undefined) {
@@ -72,7 +72,7 @@ Core.forEach = function forEach(obj, func, thisObj) {
  * @type Object
  * @returns target
  */
-Core.extend = function extend(target, obj) {
+Core.extend = function (target, obj) {
 	for (var key in obj) {
 		if (obj.hasOwnProperty(key)) {
 			target[key] = obj[key];
@@ -105,7 +105,7 @@ Core.extend(Core, {
 	 *
 	 * @private
 	 */
-	_id: function _id(arg) {
+	_id: function (arg) {
 		return typeof arg == "string" ? this._cache[arg] || (this._cache[arg] = document.getElementById(arg)) : arg;
 	},
 
@@ -114,7 +114,7 @@ Core.extend(Core, {
 	 *
 	 * @private
 	 */
-	_create: function _create(arg) {
+	_create: function (arg) {
 		return typeof arg == "string" ? document.createElement(arg) : arg;
 	},
 
@@ -126,9 +126,9 @@ Core.extend(Core, {
 	_handlers: {
 		guid: 1,
 		fid: 1,
-		createListener: function createListener(guid) {
-			return function eventListener(event) {
-				Core.forEach(Core._handlers[guid].events[(event || (event = window.event)).type], function informListeners(fid, func) {
+		createListener: function (guid) {
+			return function (event) {
+				Core.forEach(Core._handlers[guid].events[(event || (event = window.event)).type], function (fid, func) {
 					if (func.call(this, event) === false) {
 						Core.preventDefault(event);
 					}
@@ -142,7 +142,7 @@ Core.extend(Core, {
 	 *
 	 * @private
 	 */
-	_toArray: function _toArray(arg) {
+	_toArray: function (arg) {
 		if (typeof arg == "string") {
 			var i = -1, j = 0, array = arg.split(" "), length = array.length;
 			arg = [];
@@ -155,7 +155,7 @@ Core.extend(Core, {
 		return arg;
 	},
 
-	isEmpty: function isEmpty(obj) {
+	isEmpty: function (obj) {
 		for (var key in obj) {
 			if (obj.hasOwnProperty(key)) {
 				return false;
@@ -169,17 +169,17 @@ Core.extend(Core, {
 	 *
 	 *
 	 */
-	observe: window.addEventListener ? function observe(node, type, listener) {
+	observe: window.addEventListener ? function (node, type, listener) {
 		node.addEventListener(type, listener, false);
-	} : function observe(node, type, listener) {
+	} : function (node, type, listener) {
 		node.attachEvent("on" + type, listener);
 	},
-	stopObserving: window.removeEventListener ? function stopObserving(node, type, listener) {
+	stopObserving: window.removeEventListener ? function (node, type, listener) {
 		node.removeEventListener(type, listener, false);
-	} : function stopObserving(node, type, listener) {
+	} : function (node, type, listener) {
 		node.detachEvent("on" + type, listener);
 	},
-	ready: function ready(ready, list, i) {
+	ready: function (ready, list, i) {
 		return function (func) {
 			if (func) {
 				ready ? func() : list.push(func);
@@ -194,131 +194,109 @@ Core.extend(Core, {
 			}
 		};
 	}(false, [], -1),
-	parse: function parse(html) {
+	parse: function (html) {
 		var node = document.createElement("div");
 		node.innerHTML = html;
 		return new this(node.removeChild(node.firstChild));
 	},
-	create: function create(tag) {
+	create: function (tag) {
 		return new this(document.createElement(tag));
 	},
-	tag: function tag(tags) {
+	tag: function (tags) {
 		return new this(document).children(tags, true);
 	},
-	find: function find(attrs, tags) {
+	find: function (attrs, tags) {
 		return new this(document).find(attrs, tags);
 	},
-	findAttr: function findAttr(attr, values, tags) {
+	findAttr: function (attr, values, tags) {
 		return new this(document).findAttr(attr, values, tags);
 	},
-	findClass: function findClass(classes, tags) {
+	findClass: function (classes, tags) {
 		return new this(document).findClass(classes, tags);
 	},
-	makeArray: Core.IE ? function makeArray(list) {
+	makeArray: Core.IE ? function (list) {
 		var i = -1, length = list.length, array = [];
 		while (++i < length) {
 			array[i] = list[i];
 		}
 		return array;
-	} : function makeArray(list) {
+	} : function (list) {
 		return Array.prototype.slice.call(list);
 	},
-	list: function list(items, filter) {
-		if (!this.isCoreList) {
-			return new Core.list(items, filter);
-		}
-		if (filter === false) {
-			this.items = items || [];
-		}
-		else {
-			var i = -1, j = 0, k = 0, length = items.length;
-			this.items = [];
-			while (++i < length) {
-				if (items[i].nodeType == 1 && (filter ? filter.call(items[i], j++) : true)) {
-					this.items[k++] = items[i];
-				}
-			}
-		}
-		return this;
-	},
-	timer: function timer(time, func, thisObj) {
-		return this.isCoreTimer ? Core.extend(this, {time: time, func: func, thisObj: thisObj, enabled: false}) : new Core.timer(time, func, thisObj);
-	},
-	preventDefault: Core.IE ? function preventDefault(event) {
+	preventDefault: Core.IE ? function (event) {
 		event.returnValue = false;
-	} : function preventDefault(event) {
+	} : function (event) {
 		event.preventDefault();
 	},
-	stopPropagation: Core.IE ? function stopPropagation(event) {
+	stopPropagation: Core.IE ? function (event) {
 		event.cancelBubble = true;
-	} : function stopPropagation(event) {
+	} : function (event) {
 		event.stopPropagation();
 	},
-	stop: function stop(event) {
+	stop: function (event) {
 		Core.preventDefault(event);
 		Core.stopPropagation(event);
 	},
 	target: function (target) {
-		return function target(event) {
+		return function (event) {
 			return event[target];
 		};
 	}(Core.IE ? "srcElement" : "target"),
-	relatedTarget: Core.IE ? function relatedTarget(event) {
+	relatedTarget: Core.IE ? function (event) {
 		return event.fromElement === event.srcElement ? event.toElement : event.fromElement;
-	} : function relatedTarget(event) {
+	} : function (event) {
 		return event.relatedTarget;
 	},
 	mouseButton: function (property, middle) {
-		return function mouseButton(event) {
+		return function (event) {
 			return event[property] < 2 ? 1 : event[property] == middle ? 3 : 2;
 		};
 	}(Core.IE ? "button" : "which", Core.IE ? 4 : 2),
-	trim: String.prototype.trim ? function trim(str) {
+	trim: String.prototype.trim ? function (str) {
 		return str.trim();
-	} : function trim(str) {
+	} : function (str) {
 		return str.replace(/^\s+|\s+$/g, "");
 	},
-	trimLeft: String.prototype.trimLeft ? function trimLeft(str) {
+	trimLeft: String.prototype.trimLeft ? function (str) {
 		return str.trimLeft();
-	} : function trimLeft(str) {
+	} : function (str) {
 		return str.replace(/^\s+/, "");
 	},
-	trimRight: String.prototype.trimRight ? function trimRight(str) {
+	trimRight: String.prototype.trimRight ? function (str) {
 		return str.trimRight();
-	} : function trimRight(str) {
+	} : function (str) {
 		return str.replace(/\s+$/, "");
 	},
-	computedStyle: Core.IE ? function computedStyle(node) {
+	computedStyle: Core.IE ? function (node) {
 		return node.currentStyle;
-	} : function computedStyle(node) {
+	} : function (node) {
 		return node.ownerDocument.defaultView.getComputedStyle(node, null);
 	}
 });
 
 (function (calc) { // todo переделать
 	if (Core.IE) {
-		Core.pageX = function pageX(event) {
+		Core.pageX = function (event) {
 			return event.clientX + calc("Left");
 		};
-		Core.pageY = function pageY(event) {
+		Core.pageY = function (event) {
 			return event.clientY + calc("Top");
 		};
 	}
 	else {
-		Core.pageX = function pageX(event) {
+		Core.pageX = function (event) {
 			return event.pageX;
 		};
-		Core.pageY = function pageY(event) {
+		Core.pageY = function (event) {
 			return event.pageY;
 		};
 	}
-})(function calc(side) {
+})(function (side) {
 	return (element["scroll" + side] || 0) - (element["client" + side] || 0);
 });
 
-Core.prototype = {
-	isCore: true,
-	parent: function parent(tag) {
+Core.extend(Core.prototype, {
+	parent: function (tag) {
 		var node = this.node.parentNode;
 		if (tag) {
 			tag = tag.toUpperCase();
@@ -332,55 +310,55 @@ Core.prototype = {
 		}
 		return new Core(node);
 	},
-	append: function append(arg) {
+	append: function (arg) {
 		return new Core(this.node.appendChild(Core._create(arg)));
 	},
-	prepend: function prepend(arg) {
+	prepend: function (arg) {
 		return new Core(this.node.insertBefore(Core._create(arg), this.node.firstChild));
 	},
-	after: function after(arg) {
+	after: function (arg) {
 		return new Core(this.node.parentNode.insertBefore(Core._create(arg), this.node.nextSibling));
 	},
-	before: function before(arg) {
+	before: function (arg) {
 		return new Core(this.node.parentNode.insertBefore(Core._create(arg), this.node));
 	},
-	appendTo: function appendTo(arg) {
+	appendTo: function (arg) {
 		(arg = new Core(arg)).node.appendChild(this.node);
 		return arg;
 	},
-	prependTo: function prependTo(arg) {
+	prependTo: function (arg) {
 		(arg = new Core(arg)).node.insertBefore(this.node, arg.node.firstChild);
 		return arg;
 	},
-	insertAfter: function insertAfter(arg) {
+	insertAfter: function (arg) {
 		var obj = new Core(arg);
 		obj.node.parentNode.insertBefore(this.node, obj.node.nextSibling);
 		return obj;
 	},
-	insertBefore: function insertBefore(arg) {
+	insertBefore: function (arg) {
 		var obj = new Core(arg);
 		obj.node.parentNode.insertBefore(this.node, obj.node);
 		return obj;
 	},
-	clone: function clone(cloneChild, cloneHandlers) {
+	clone: function (cloneChild, cloneHandlers) {
 		cloneChild = cloneChild !== false;
 		cloneHandlers = cloneHandlers !== false;
-		var list = cloneChild ? this.children(true).add(this.node) : new Core.list([this.node]), clone, guid, handler, data = {};
-		list.each(function temporallyRemoveListeners(index) {
+		var list = cloneChild ? this.children(true).add(this.node) : new Core.List([this.node]), clone, guid, handler, data = {};
+		list.each(function (index) {
 			guid = this.guid;
 			this.guid = null;
 			if (guid && Core._handlers[guid]) {
-				Core.forEach(Core._handlers[guid].events, function unbindListeners(type) {
+				Core.forEach(Core._handlers[guid].events, function (type) {
 					Core.stopObserving(this, type, Core._handlers[guid].listener);
 				}, this);
 				data[guid] = index;
 			}
 		});
 		clone = new Core(this.node.cloneNode(cloneChild));
-		list = cloneChild ? clone.children(true).add(clone.node) : new Core.list([clone.node]);
-		Core.forEach(data, function restoreListeners(guid, index) {
+		list = cloneChild ? clone.children(true).add(clone.node) : new Core.List([clone.node]);
+		Core.forEach(data, function (guid, index) {
 			(handler = Core._handlers[guid]).node.guid = guid;
-			Core.forEach(handler.events, function bindListeners(type) {
+			Core.forEach(handler.events, function (type) {
 				Core.observe(this.node, type, this.listener);
 			}, handler);
 			if (cloneHandlers) {
@@ -389,7 +367,7 @@ Core.prototype = {
 		});
 		return clone;
 	},
-	replace: function replace(arg) {
+	replace: function (arg) {
 		// Просто replaceChild не используется,
 		// потомучто необходимо удалить обработчики
 		// событий заменяемого элемента и всех его
@@ -399,9 +377,9 @@ Core.prototype = {
 		this.remove();
 		return arg;
 	},
-	wrap: Core.IE ? function wrap(arg, side) {
+	wrap: Core.IE ? function (arg, side) {
 		return new Core(this.node.applyElement(Core._create(arg), side));
-	} : function wrap(arg, side) {
+	} : function (arg, side) {
 		if (side === "inside") {
 			var nodes = document.createDocumentFragment();
 			Core.forEach(Core.makeArray(this.node.childNodes), function (node) {
@@ -411,38 +389,38 @@ Core.prototype = {
 		}
 		return this.appendTo(this.before(arg).node);
 	},
-	el: function el(arg) {
+	el: function (arg) {
 		return arg ? this.replace(Core._id(arg)) : this.node;
 	},
-	empty: function empty() {
+	empty: function () {
 		this.children(true).each("remove", false);
 		while (this.node.firstChild) {
 			this.node.removeChild(this.node.firstChild);
 		}
 		return this;
 	},
-	remove: function remove(child) {
+	remove: function (child) {
 		if (child !== false) {
 			this.empty();
 		}
 		Core.clear(this.unbind().node).parentNode.removeChild(this.node);
 		return this;
 	},
-	html: function html(str) {
+	html: function (str) {
 		if (str !== undefined) {
 			this.empty().node.innerHTML = str;
 			return this;
 		}
 		else return this.node.innerHTML;
 	},
-	text: function text(str) {
+	text: function (str) {
 		if (str !== undefined) {
 			this.empty().node.appendChild(document.createTextNode(str));
 			return this;
 		}
 		else return this.node.innerText || this.node.textContent;
 	},
-	bind: function bind(type, func) {
+	bind: function (type, func) {
 		var guid = this.node.guid || (this.node.guid = Core._handlers.guid++);
 		if (!Core._handlers[guid]) Core._handlers[guid] = {
 			node: this.node,
@@ -460,7 +438,7 @@ Core.prototype = {
 		else return Core._handlers[guid];
 		return this;
 	},
-	unbind: function unbind(type, listener) {
+	unbind: function (type, listener) {
 		var handler = Core._handlers[this.node.guid], events;
 		if (handler) {
 			events = handler.events;
@@ -482,7 +460,7 @@ Core.prototype = {
 		}
 		return this;
 	},
-	copyHandlers: function copyHandlers(arg, type) {
+	copyHandlers: function (arg, type) {
 		var handler = Core._handlers[Core._id(arg).guid], current, node;
 		if (handler) {
 			current = this.bind(type);
@@ -498,12 +476,12 @@ Core.prototype = {
 		}
 		return this;
 	},
-	exist: function exist(exist, die) {
+	exist: function (exist, die) {
 		if (exist && this.node) exist.call(this.node);
 		else if (die && !this.node) die();
 		return !!this.node;
 	},
-	hasClass: function hasClass(arg) {
+	hasClass: function (arg) {
 		if (arg) {
 			var className = " " + this.node.className + " ", exist = true;
 			Core.forEach(Core._toArray(arg), function (str) {
@@ -513,7 +491,7 @@ Core.prototype = {
 		}
 		else return !!this.node.className;
 	},
-	addClass: function addClass(classes) {
+	addClass: function (classes) {
 		var className = this.node.className, modified = false;
 		if (className) {
 			className = " " + className + " ";
@@ -528,7 +506,7 @@ Core.prototype = {
 		else this.node.className = classes;
 		return this;
 	},
-	removeClass: function removeClass(classes) {
+	removeClass: function (classes) {
 		if (classes) {
 			var modified = false, i = 0, className = [];
 			classes = " " + (classes.join ? classes.join(" ") : classes) + " ";
@@ -541,7 +519,7 @@ Core.prototype = {
 		else this.node.className = "";
 		return this;
 	},
-	toggleClass: function toggleClass(classes1, classes2) {
+	toggleClass: function (classes1, classes2) {
 		var className = this.node.className;
 		if (classes2) {
 			if (className) {
@@ -564,7 +542,7 @@ Core.prototype = {
 		}
 		return this;
 	},
-	attr: function attr(arg, value) {
+	attr: function (arg, value) {
 		if (value !== undefined) {
 			var attr = arg;
 			arg = {};
@@ -578,16 +556,16 @@ Core.prototype = {
 		Core.extend(this.node, arg);
 		return this;
 	},
-	removeAttr: function removeAttr(attrs) {
+	removeAttr: function (attrs) {
 		var i = (attrs = Core._toArray(attrs)).length;
 		while (i--) this.node[attrs[i]] = null;
 		return this;
 	},
-	val: function val(str) {
+	val: function (str) {
 		var value = "value" in this.node;
 		return str !== undefined ? (value ? this.attr({value: str}) : this.text(str)) : (value ? this.node.value : ((value = this.node.firstChild) ? value.nodeValue : ""));
 	},
-	is: function is(arg, tag) {
+	is: function (arg, tag) {
 		if (!arg) {
 			return this.exist();
 		}
@@ -599,14 +577,14 @@ Core.prototype = {
 			result = this.node.nodeName.toUpperCase() == tag.toUpperCase();
 		}
 		if (result) {
-			Core.forEach(arg, function compareProperties(attr, value) {
+			Core.forEach(arg, function (attr, value) {
 				return this[attr] == value || (result = false);
 			}, this.node);
 		}
 		return result;
 	},
 	css: function (change, get) {
-		return function css(arg, value) {
+		return function (arg, value) {
 			if (value !== undefined) {
 				var property = arg;
 				arg = {};
@@ -652,25 +630,25 @@ Core.prototype = {
 	}}) : function (node, property) {
 		return document.defaultView.getComputedStyle(node, null)[property];
 	}),
-	hide: function hide() {
+	hide: function () {
 		this.node.style.display = "none";
 		return this;
 	},
-	show: function show(type) {
+	show: function (type) {
 		this.node.style.display = type || "block";
 		return this;
 	},
-	visible: function visible() {
+	visible: function () {
 		return this.node.offsetWidth > 0 || this.node.offsetHeight > 0;
 	},
-	toggle: function toggle(type) {
+	toggle: function (type) {
 		this.node.style.display = this.css(["display"]) == "none" ? type || "block" : "none";
 		return this;
 	},
-	enabled: function enabled(bool) {
+	enabled: function (bool) {
 		return typeof bool == "boolean" ? (bool ? this.removeAttr(["disabled"]) : this.attr({disabled: "disabled"})) : !this.attr(["disabled"]);
 	},
-	id: function id(str) {
+	id: function (str) {
 		if (str !== undefined) {
 			delete Core._cache[this.node.id];
 			this.node.id = str;
@@ -678,7 +656,7 @@ Core.prototype = {
 		}
 		else return this.node.id;
 	},
-	serialize: function serialize() {
+	serialize: function () {
 		return this.node.outerHTML || new XMLSerializer().serializeToString(this.node);
 	},
 	position: element.getBoundingClientRect ? function () {
@@ -710,7 +688,7 @@ Core.prototype = {
 			while (i--) complex[j++] = tags[i] + selector;
 			selector = complex.join(",");
 		}
-		return new Core.list(this.node.querySelectorAll(selector), false);
+		return new Core.List(this.node.querySelectorAll(selector), false);
 	} : function (attrs, tags) {
 		var i = -1, n = 0, list = this.children(tags, true).items, length = list.length, key, array = [];
 		if (attrs.split || attrs.join) {
@@ -732,7 +710,7 @@ Core.prototype = {
 			});
 			if (key) array[n++] = list[i];
 		}
-		return new Core.list(array, false);
+		return new Core.List(array, false);
 	},
 	findAttr: document.querySelectorAll ? function (attr, values, tags) {
 		var selector = [], i = (values = Core._toArray(values)).length, j = 0, k = (tags = tags ? Core._toArray(tags) : [""]).length, n = i;
@@ -741,7 +719,7 @@ Core.prototype = {
 			while (i--) selector[j++] = tags[k] + "[" + attr + '~="' + values[i] + '"]';
 			i = n;
 		}
-		return new Core.list(this.node.querySelectorAll(selector.join(",")), false);
+		return new Core.List(this.node.querySelectorAll(selector.join(",")), false);
 	} : function (attr, values, tags) {
 		var i = -1, j, n = 0, k = (values = Core._toArray(values)).length, list = this.children(tags, true).items, length = list.length, key, value, array = [];
 		while (++i < length) {
@@ -754,7 +732,7 @@ Core.prototype = {
 			}
 			if (key) array[n++] = list[i];
 		}
-		return new Core.list(array, false);		
+		return new Core.List(array, false);		
 	},
 	children: function (find, children, filter) {
 		if ("children" in element) {
@@ -774,9 +752,9 @@ Core.prototype = {
 						while (++i < length) if (tags.indexOf(" " + child[i].tagName + " ") != -1) list[j++] = child[i];
 					}
 				}
-				return new Core.list(list, false);
+				return new Core.List(list, false);
 			}
-			else return new Core.list(this.node[children], filter);
+			else return new Core.List(this.node[children], filter);
 		};
 	}(document.querySelectorAll ? function (node, tags) {
 		return node.querySelectorAll(tags.join(","));
@@ -801,13 +779,13 @@ Core.prototype = {
 			selector = selector.join(",");
 		}
 		else selector = "." + classes.join(",.");
-		return new Core.list(this.node.querySelectorAll(selector), false);
+		return new Core.List(this.node.querySelectorAll(selector), false);
 	} : document.getElementsByClassName ? function (classes, tags) {
-		return !tags && (classes = Core._toArray(classes)).length == 1 ? new Core.list(this.node.getElementsByClassName(classes[0]), false) : this.findAttr("className", classes, tags);
+		return !tags && (classes = Core._toArray(classes)).length == 1 ? new Core.List(this.node.getElementsByClassName(classes[0]), false) : this.findAttr("className", classes, tags);
 	} : function (classes, tags) {
 		return this.findAttr("className", classes, tags);
 	}
-};
+});
 Core.extend(Core.prototype, function (traversal, sibling, child) {
 	if ("childElementCount" in element) {
 		traversal = {next: "nextElementSibling", prev: "previousElementSibling", first: "firstElementChild", last: "lastElementChild"};
@@ -860,8 +838,32 @@ Core.extend(Core.prototype, function (traversal, sibling, child) {
 		}
 	};
 }());
-Core.list.prototype = {
-	isCoreList: true,
+
+/**
+ * Конструктор объекта для работы с набором элементов
+ * @constructor
+ * @argument {Array|NodeList} items Набор элементов
+ * @argument {Function|Boolean} filetr Функция-фильтр или флаг использования фильтра
+ */
+Core.List = function (items, filter) {
+	if (this.constructor != Core.List) {
+		return new Core.List(items, filter);
+	}
+	if (filter === false) {
+		this.items = items || [];
+	}
+	else {
+		var i = -1, j = 0, k = 0, length = items.length;
+		this.items = [];
+		while (++i < length) {
+			if (items[i].nodeType == 1 && (filter ? filter.call(items[i], j++) : true)) {
+				this.items[k++] = items[i];
+			}
+		}
+	}
+	return this;
+};
+Core.extend(Core.List.prototype, {
 	get: function (index) {
 		return index === undefined ? this.items : new Core(this.items[index]);
 	},
@@ -881,8 +883,8 @@ Core.list.prototype = {
 		this.items = this.items.concat(args);
 		return this;
 	}
-};
-Core.extend(Core.list.prototype, function (slice) {
+});
+Core.extend(Core.List.prototype, function (slice) {
 	function check(args) {
 		var length = (args = slice.call(args, 1)).length < 2;
 		return length ? {method: "call", args: args[0]} : {method: "apply", args: args};
@@ -901,10 +903,10 @@ Core.extend(Core.list.prototype, function (slice) {
 	}));
 	return {
 		filter: function (arg) {
-			if (arg.call) return new Core.list(this.items, arg);
+			if (arg.call) return new Core.List(this.items, arg);
 			else {
 				var obj = new Core(this.items[0]), exec = check(arguments);
-				return new Core.list(this.items, exec.method == "call" ? function () {
+				return new Core.List(this.items, exec.method == "call" ? function () {
 					obj.node = this;
 					return obj[arg](exec.args);
 				} : function () {
@@ -933,23 +935,35 @@ Core.extend(Core.list.prototype, function (slice) {
 		}
 	};
 }(Array.prototype.slice));
-Core.prototype.store = Core.list.prototype.store = function () {
+
+Core.prototype.store = Core.List.prototype.store = function () {
 	return Core._storage = this;
 };
-Core.restore = Core.prototype.restore = Core.list.prototype.restore = function () {
+Core.restore = Core.prototype.restore = Core.List.prototype.restore = function () {
 	var storage = Core._storage;
 	delete Core._storage;
 	return storage;
 };
-Core.timer.prototype = {
-	isCoreTimer: true,
+
+/**
+ * Таймер
+ * @constructor
+ * @argument {Number} time Задержка между итерациями в миллисекундах
+ * @argument {Function} func Функция
+ * @argument {Object} thisObj Контекст вызова функции func
+ */
+Core.Timer = function (time, func, thisObj) {
+	return this.constructor == Core.Timer ? Core.extend(this, {time: time, func: func, thisObj: thisObj, enabled: false}) : new Core.Timer(time, func, thisObj);
+};
+
+Core.extend(Core.Timer.prototype, {
 	start: function () {
 		if (!this.enabled) {
 			var timer = this;
 			timer.enabled = true;
-			(function callee() {
+			(function () {
 				timer.func.call(timer.thisObj, timer);
-				if (timer.enabled) setTimeout(callee, timer.time);
+				if (timer.enabled) setTimeout(arguments.callee, timer.time);
 			})();
 		}
 		return this;
@@ -962,9 +976,9 @@ Core.timer.prototype = {
 		if (!this.enabled) {
 			var timer = this;
 			timer.enabled = true;
-			(function callee() {
+			(function () {
 				timer.func.call(timer.thisObj, timer);
-				if (timer.enabled && --amount) setTimeout(callee, timer.time);
+				if (timer.enabled && --amount) setTimeout(arguments.callee, timer.time);
 				else {
 					timer.enabled = false;
 					if (callback) callback.call(thisObj || timer.thisObj, timer);
@@ -973,7 +987,8 @@ Core.timer.prototype = {
 		}
 		return this;
 	}
-};
+});
+
 (function (listener) {
 	Core.observe(window, "load", listener);
 	if (Core.IE) {
@@ -987,13 +1002,13 @@ Core.timer.prototype = {
 	else {
 		document.addEventListener("DOMContentLoaded", listener, false);
 	}
-}(function callee() {
-	Core.stopObserving(document, "DOMContentLoaded", callee);
-	Core.stopObserving(window, "load", callee);
+}(function () {
+	Core.stopObserving(document, "DOMContentLoaded", arguments.callee);
+	Core.stopObserving(window, "load", arguments.callee);
 	Core.ready();
 }));
-Core.observe(window, "unload", function callee() {
-	Core.stopObserving(window, "unload", callee);
+Core.observe(window, "unload", function () {
+	Core.stopObserving(window, "unload", arguments.callee);
 	delete Core._cache;
 	delete Core._storage;
 	delete Core._handlers.guid;
