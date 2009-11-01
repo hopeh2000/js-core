@@ -14,6 +14,7 @@
 • Метод Core.bind(…) переименован в Core.observe(…)
 • Метод Core.unbind(…) переименован в Core.stopObserve(…)
 • Удален метод Core.context(…)
+• Конструкторы Core.list и Core.timer теперь называются Core.List и Core.Timer
 
 [planned]
 

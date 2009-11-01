@@ -10,7 +10,7 @@ $.ready(function() {
 			var link = $(this), position = tooltip.position().left;
 			if(move && position > 0) {
 				var destination = link.position().left, step = position < destination ? 5 : -5;
-				$.timer(10, function(timer) {
+				$.Timer(10, function(timer) {
 					if(move && Math.abs(position - destination) > 5) {
 						position += step;
 						tooltip.css('left', position + 'px');
