@@ -13,6 +13,7 @@
   цепочку аналогично Core(…).appendTo(…) и Core(…).prependTo(…)
 • Метод Core.bind(…) переименован в Core.observe(…)
 • Метод Core.unbind(…) переименован в Core.stopObserve(…)
+• Удален метод Core.context(…)
 
 [planned]
 
@@ -52,3 +53,4 @@
 	http://www.w3.org/TR/html5/dom.html#embedding-custom-non-visible-data
 • Добавить метод, преобразующий Core в Core.list
 • Добавить метод, позволяющий извлечь документ из DOM-деревеа, не удаляя обработчики событий
+• Метод Core(…).attr("attr1 attr2 attr3") должен возвращать объект.

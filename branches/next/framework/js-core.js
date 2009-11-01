@@ -25,18 +25,6 @@ function Core(arg) {
 }
 
 /**
- * Ссылка на window
- * @private
- */
-Core._win = window;
-
-/**
- * Ссылка на document
- * @private
- */
-Core._doc = document;
-
-/**
  * Internet Explorer
  * @type Boolean
  */
@@ -49,28 +37,27 @@ Core.IE = /*@cc_on!@*/false;
  * непосредственно пренадлежащие объекту (hasOwnProperty).
  * @argument {Array|Object} obj Массив или объект
  * @argument {Function} func Функция
- * @argument {Object} [context] Контекст вызова функции (по умолчанию window)
+ * @argument {Object} [thisObj] Контекст вызова функции (по умолчанию window)
  * @type Array|Object
- * @returns Исходный массив или объект
+ * @returns obj
  */
-Core.forEach = function forEach(obj, func, context) {
-	var length = obj.length, i, key;
-	context = context || Core._win;
+Core.forEach = function forEach(obj, func, thisObj) {
+	var length = obj.length, i = -1, key;
+	thisObj = thisObj || window;
 	if (length === undefined) {
 		for (key in obj) {
 			if (obj.hasOwnProperty(key)) {
-				// func → function (key, value, object) { this → context }
-				if (func.call(context, key, obj[key], obj) === false) {
+				// func → function (key, value, object) { this → thisObj }
+				if (func.call(thisObj, key, obj[key], obj) === false) {
 					break;
 				}
 			}
 		}
 	}
-	else {
-		i = -1;
+	else if (length) {
 		while (++i < length) {
-			// func → function (element, index, array, length) { this → context }
-			if (func.call(context, obj[i], i, obj, length) === false) {
+			// func → function (element, index, array, length) { this → thisObj }
+			if (func.call(thisObj, obj[i], i, obj, length) === false) {
 				break;
 			}
 		}
@@ -80,16 +67,18 @@ Core.forEach = function forEach(obj, func, context) {
 
 /**
  * Копирует свойства одного объекта в другой.
- * @argument {Object} obj Объект, в который копируются свойства
- * @argument {Object} hash Объект, чьи свойства копируются
+ * @argument {Object} target Объект, в который копируются свойства
+ * @argument {Object} obj Объект, чьи свойства копируются
  * @type Object
- * @returns Исходный объект
+ * @returns target
  */
-Core.extend = function extend(obj, hash) {
-	this.forEach(hash, function copyProperties(key, value) {
-		obj[key] = value;
-	});
-	return obj;
+Core.extend = function extend(target, obj) {
+	for (var key in obj) {
+		if (obj.hasOwnProperty(key)) {
+			target[key] = obj[key];
+		}
+	}
+	return target;
 };
 
 Core.extend(Core, {
@@ -117,7 +106,7 @@ Core.extend(Core, {
 	 * @private
 	 */
 	_id: function _id(arg) {
-		return typeof arg == "string" ? this._cache[arg] || (this._cache[arg] = this._doc.getElementById(arg)) : arg;
+		return typeof arg == "string" ? this._cache[arg] || (this._cache[arg] = document.getElementById(arg)) : arg;
 	},
 
 	/**
@@ -126,7 +115,7 @@ Core.extend(Core, {
 	 * @private
 	 */
 	_create: function _create(arg) {
-		return typeof arg == "string" ? this._doc.createElement(arg) : arg;
+		return typeof arg == "string" ? document.createElement(arg) : arg;
 	},
 
 	/**
@@ -139,7 +128,7 @@ Core.extend(Core, {
 		fid: 1,
 		createListener: function createListener(guid) {
 			return function eventListener(event) {
-				Core.forEach(Core._handlers[guid].events[(event || (event = Core._win.event)).type], function informListeners(fid, func) {
+				Core.forEach(Core._handlers[guid].events[(event || (event = window.event)).type], function informListeners(fid, func) {
 					if (func.call(this, event) === false) {
 						Core.preventDefault(event);
 					}
@@ -167,8 +156,8 @@ Core.extend(Core, {
 	},
 
 	isEmpty: function isEmpty(obj) {
-		for (var prop in obj) {
-			if (obj.hasOwnProperty(prop)) {
+		for (var key in obj) {
+			if (obj.hasOwnProperty(key)) {
 				return false;
 			}
 		}
@@ -205,30 +194,25 @@ Core.extend(Core, {
 			}
 		};
 	}(false, [], -1),
-	context: function context(func, context) {
-		return function wrapper(arg) {
-			return func.call(context, arg);
-		};
-	},
 	parse: function parse(html) {
-		var node = this._doc.createElement("div");
+		var node = document.createElement("div");
 		node.innerHTML = html;
 		return new this(node.removeChild(node.firstChild));
 	},
 	create: function create(tag) {
-		return new this(this._doc.createElement(tag));
+		return new this(document.createElement(tag));
 	},
 	tag: function tag(tags) {
-		return new this(this._doc).children(tags, true);
+		return new this(document).children(tags, true);
 	},
 	find: function find(attrs, tags) {
-		return new this(this._doc).find(attrs, tags);
+		return new this(document).find(attrs, tags);
 	},
 	findAttr: function findAttr(attr, values, tags) {
-		return new this(this._doc).findAttr(attr, values, tags);
+		return new this(document).findAttr(attr, values, tags);
 	},
 	findClass: function findClass(classes, tags) {
-		return new this(this._doc).findClass(classes, tags);
+		return new this(document).findClass(classes, tags);
 	},
 	makeArray: Core.IE ? function makeArray(list) {
 		var i = -1, length = list.length, array = [];
@@ -257,8 +241,8 @@ Core.extend(Core, {
 		}
 		return this;
 	},
-	timer: function timer(time, func, context) {
-		return this.isCoreTimer ? Core.extend(this, {time: time, func: func, context: context, enabled: false}) : new Core.timer(time, func, context);
+	timer: function timer(time, func, thisObj) {
+		return this.isCoreTimer ? Core.extend(this, {time: time, func: func, thisObj: thisObj, enabled: false}) : new Core.timer(time, func, thisObj);
 	},
 	preventDefault: Core.IE ? function preventDefault(event) {
 		event.returnValue = false;
@@ -337,9 +321,9 @@ Core.prototype = {
 	parent: function parent(tag) {
 		var node = this.node.parentNode;
 		if (tag) {
-			tag = tag.toLowerCase();
+			tag = tag.toUpperCase();
 			do {
-				if (node.nodeName.toLowerCase() == tag) {
+				if (node.nodeName.toUpperCase() == tag) {
 					break;
 				}
 				node = node.parentNode;
@@ -419,7 +403,7 @@ Core.prototype = {
 		return new Core(this.node.applyElement(Core._create(arg), side));
 	} : function wrap(arg, side) {
 		if (side === "inside") {
-			var nodes = Core._doc.createDocumentFragment();
+			var nodes = document.createDocumentFragment();
 			Core.forEach(Core.makeArray(this.node.childNodes), function (node) {
 				nodes.appendChild(node);
 			});
@@ -453,7 +437,7 @@ Core.prototype = {
 	},
 	text: function text(str) {
 		if (str !== undefined) {
-			this.empty().node.appendChild(Core._doc.createTextNode(str));
+			this.empty().node.appendChild(document.createTextNode(str));
 			return this;
 		}
 		else return this.node.innerText || this.node.textContent;
@@ -608,11 +592,11 @@ Core.prototype = {
 			return this.exist();
 		}
 		if (typeof arg == "string") {
-			return this.node.nodeName.toLowerCase() == arg.toLowerCase();
+			return this.node.nodeName.toUpperCase() == arg.toUpperCase();
 		}
 		var result;
 		if (tag) {
-			result = this.node.nodeName.toLowerCase() == tag.toLowerCase();
+			result = this.node.nodeName.toUpperCase() == tag.toUpperCase();
 		}
 		if (result) {
 			Core.forEach(arg, function compareProperties(attr, value) {
@@ -666,27 +650,27 @@ Core.prototype = {
 		}
 		else return 1;
 	}}) : function (node, property) {
-		return Core._doc.defaultView.getComputedStyle(node, null)[property];
+		return document.defaultView.getComputedStyle(node, null)[property];
 	}),
-	hide: function () {
+	hide: function hide() {
 		this.node.style.display = "none";
 		return this;
 	},
-	show: function (type) {
+	show: function show(type) {
 		this.node.style.display = type || "block";
 		return this;
 	},
-	visible: function () {
+	visible: function visible() {
 		return this.node.offsetWidth > 0 || this.node.offsetHeight > 0;
 	},
-	toggle: function (type) {
+	toggle: function toggle(type) {
 		this.node.style.display = this.css(["display"]) == "none" ? type || "block" : "none";
 		return this;
 	},
-	enabled: function (bool) {
+	enabled: function enabled(bool) {
 		return typeof bool == "boolean" ? (bool ? this.removeAttr(["disabled"]) : this.attr({disabled: "disabled"})) : !this.attr(["disabled"]);
 	},
-	id: function (str) {
+	id: function id(str) {
 		if (str !== undefined) {
 			delete Core._cache[this.node.id];
 			this.node.id = str;
@@ -694,12 +678,12 @@ Core.prototype = {
 		}
 		else return this.node.id;
 	},
-	serialize: function () {
+	serialize: function serialize() {
 		return this.node.outerHTML || new XMLSerializer().serializeToString(this.node);
 	},
 	position: element.getBoundingClientRect ? function () {
 		var rect = this.node.getBoundingClientRect();
-		return {top: Math.round(rect.top +  (Core._win.pageYOffset || element.scrollTop) - (element.clientTop || 0)), left: Math.round(rect.left + (Core._win.pageXOffset || element.scrollLeft) - (element.clientLeft || 0))};
+		return {top: Math.round(rect.top +  (window.pageYOffset || element.scrollTop) - (element.clientTop || 0)), left: Math.round(rect.left + (window.pageXOffset || element.scrollLeft) - (element.clientLeft || 0))};
 	} : function () {
 		var top = 0, left = 0, node = this.node;
 		while (node) {
@@ -709,7 +693,7 @@ Core.prototype = {
 		}
 		return {top: top, left: left};
 	},
-	find: Core._doc.querySelectorAll ? function (attrs, tags) {
+	find: document.querySelectorAll ? function (attrs, tags) {
 		var selector = [], i, j = 0;
 		if (attrs.split || attrs.join)  {
 			i = (attrs = Core._toArray(attrs)).length;
@@ -750,7 +734,7 @@ Core.prototype = {
 		}
 		return new Core.list(array, false);
 	},
-	findAttr: Core._doc.querySelectorAll ? function (attr, values, tags) {
+	findAttr: document.querySelectorAll ? function (attr, values, tags) {
 		var selector = [], i = (values = Core._toArray(values)).length, j = 0, k = (tags = tags ? Core._toArray(tags) : [""]).length, n = i;
 		attr = Core._attrs[attr] || attr.toLowerCase();
 		while (k--) {
@@ -794,7 +778,7 @@ Core.prototype = {
 			}
 			else return new Core.list(this.node[children], filter);
 		};
-	}(Core._doc.querySelectorAll ? function (node, tags) {
+	}(document.querySelectorAll ? function (node, tags) {
 		return node.querySelectorAll(tags.join(","));
 	} : function (node, tags, i) {
 		var list = [];
@@ -804,7 +788,7 @@ Core.prototype = {
 	descendants: function (tags) {
 		return this.children(tags, true);
 	},
-	findClass: Core._doc.querySelectorAll ? function (classes, tags) {
+	findClass: document.querySelectorAll ? function (classes, tags) {
 		var selector = [];
 		classes = Core._toArray(classes);
 		if (tags) {
@@ -818,7 +802,7 @@ Core.prototype = {
 		}
 		else selector = "." + classes.join(",.");
 		return new Core.list(this.node.querySelectorAll(selector), false);
-	} : Core._doc.getElementsByClassName ? function (classes, tags) {
+	} : document.getElementsByClassName ? function (classes, tags) {
 		return !tags && (classes = Core._toArray(classes)).length == 1 ? new Core.list(this.node.getElementsByClassName(classes[0]), false) : this.findAttr("className", classes, tags);
 	} : function (classes, tags) {
 		return this.findAttr("className", classes, tags);
@@ -964,7 +948,7 @@ Core.timer.prototype = {
 			var timer = this;
 			timer.enabled = true;
 			(function callee() {
-				timer.func.call(timer.context, timer);
+				timer.func.call(timer.thisObj, timer);
 				if (timer.enabled) setTimeout(callee, timer.time);
 			})();
 		}
@@ -974,16 +958,16 @@ Core.timer.prototype = {
 		this.enabled = false;
 		return this;
 	},
-	repeat: function (amount, callback, context) {
+	repeat: function (amount, callback, thisObj) {
 		if (!this.enabled) {
 			var timer = this;
 			timer.enabled = true;
 			(function callee() {
-				timer.func.call(timer.context, timer);
+				timer.func.call(timer.thisObj, timer);
 				if (timer.enabled && --amount) setTimeout(callee, timer.time);
 				else {
 					timer.enabled = false;
-					if (callback) callback.call(context || timer.context, timer);
+					if (callback) callback.call(thisObj || timer.thisObj, timer);
 				}
 			})();
 		}
@@ -991,25 +975,25 @@ Core.timer.prototype = {
 	}
 };
 (function (listener) {
-	Core.observe(Core._win, "load", listener);
+	Core.observe(window, "load", listener);
 	if (Core.IE) {
 		try {
 			element.doScroll("left");
 		}
 		catch(error) {
-			Core._doc.write(unescape('%3CSCRIPT onreadystatechange="if (this.readyState==\'complete\') Core.ready()" defer="defer" src="\/\/:"%3E%3C/SCRIPT%3E'));
+			document.write(unescape('%3CSCRIPT onreadystatechange="if (this.readyState==\'complete\') Core.ready()" defer="defer" src="\/\/:"%3E%3C/SCRIPT%3E'));
 		}
 	}
 	else {
-		Core._doc.addEventListener("DOMContentLoaded", listener, false);
+		document.addEventListener("DOMContentLoaded", listener, false);
 	}
 }(function callee() {
-	Core.stopObserving(Core._doc, "DOMContentLoaded", callee);
-	Core.stopObserving(Core._win, "load", callee);
+	Core.stopObserving(document, "DOMContentLoaded", callee);
+	Core.stopObserving(window, "load", callee);
 	Core.ready();
 }));
-Core.observe(Core._win, "unload", function callee() {
-	Core.stopObserving(Core._win, "unload", callee);
+Core.observe(window, "unload", function callee() {
+	Core.stopObserving(window, "unload", callee);
 	delete Core._cache;
 	delete Core._storage;
 	delete Core._handlers.guid;
