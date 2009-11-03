@@ -31,41 +31,6 @@ function Core(arg) {
 Core.IE = /*@cc_on!@*/false;
 
 /**
- * Выполняет функцию для каждого элемента массива или свойства объекта.
- * Чтобы прервать цикл, функция должна вернуть false.
- * В случае с объектом, в переборе участвуют только свойства,
- * непосредственно пренадлежащие объекту (hasOwnProperty).
- * @argument {Array|Object} obj Массив или объект
- * @argument {Function} func Функция
- * @argument {Object} [thisObj] Контекст вызова функции (по умолчанию window)
- * @type Array|Object
- * @returns obj
- */
-Core.forEach = function (obj, func, thisObj) {
-	var length = obj.length, i = -1, key;
-	thisObj = thisObj || window;
-	if (length === undefined) {
-		for (key in obj) {
-			if (obj.hasOwnProperty(key)) {
-				// func → function (key, value, object) { this → thisObj }
-				if (func.call(thisObj, key, obj[key], obj) === false) {
-					break;
-				}
-			}
-		}
-	}
-	else if (length) {
-		while (++i < length) {
-			// func → function (element, index, array, length) { this → thisObj }
-			if (func.call(thisObj, obj[i], i, obj, length) === false) {
-				break;
-			}
-		}
-	}
-	return obj;
-};
-
-/**
  * Копирует свойства одного объекта в другой.
  * @argument {Object} target Объект, в который копируются свойства
  * @argument {Object} obj Объект, чьи свойства копируются
@@ -153,6 +118,42 @@ Core.extend(Core, {
 			}
 		}
 		return arg;
+	},
+
+	/**
+	 * Выполняет функцию для каждого элемента массива или свойства объекта.
+	 * Чтобы прервать цикл, функция должна вернуть false.
+	 * В случае с объектом, в переборе участвуют только свойства,
+	 * непосредственно пренадлежащие объекту (hasOwnProperty).
+	 * @argument {Array|Object} obj Массив или объект
+	 * @argument {Function} func Функция
+	 * @argument {Object} [thisObj] Контекст вызова функции (по умолчанию window)
+	 * @type Array|Object
+	 * @returns obj
+	 */
+	forEach: function (obj, func, thisObj) {
+		var len = obj.length, i;
+		thisObj = thisObj || window;
+		if (len === undefined) {
+			for (i in obj) {
+				if (obj.hasOwnProperty(i)) {
+					// func → function (key, value, object) { this → thisObj }
+					if (func.call(thisObj, i, obj[i], obj) === false) {
+						break;
+					}
+				}
+			}
+		}
+		else if (len) {
+			i = -1;
+			while (++i < len) {
+				// func → function (element, index, array, length) { this → thisObj }
+				if (func.call(thisObj, obj[i], i, obj, len) === false) {
+					break;
+				}
+			}
+		}
+		return obj;
 	},
 
 	isEmpty: function (obj) {
@@ -784,6 +785,14 @@ Core.extend(Core.prototype, {
 		return !tags && (classes = Core._toArray(classes)).length == 1 ? new Core.List(this.node.getElementsByClassName(classes[0]), false) : this.findAttr("className", classes, tags);
 	} : function (classes, tags) {
 		return this.findAttr("className", classes, tags);
+	},
+	store: function () {
+		return Core._storage = this;
+	},
+	restore: function () {
+		var storage = Core._storage;
+		delete Core._storage;
+		return storage;
 	}
 });
 Core.extend(Core.prototype, function (traversal, sibling, child) {
@@ -882,8 +891,11 @@ Core.extend(Core.List.prototype, {
 		}
 		this.items = this.items.concat(args);
 		return this;
-	}
+	},
+	store: Core.prototype.store,
+	restore: Core.prototype.restore
 });
+
 Core.extend(Core.List.prototype, function (slice) {
 	function check(args) {
 		var length = (args = slice.call(args, 1)).length < 2;
@@ -935,15 +947,6 @@ Core.extend(Core.List.prototype, function (slice) {
 		}
 	};
 }(Array.prototype.slice));
-
-Core.prototype.store = Core.List.prototype.store = function () {
-	return Core._storage = this;
-};
-Core.restore = Core.prototype.restore = Core.List.prototype.restore = function () {
-	var storage = Core._storage;
-	delete Core._storage;
-	return storage;
-};
 
 /**
  * Таймер
